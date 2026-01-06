@@ -1,17 +1,60 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../../services/axios'
 import { toast } from 'vue3-toastify'
 
 const router = useRouter()
+
+// Estados de carga y datos
 const services = ref<any[]>([])
 const isLoading = ref(true)
+const isSaving = ref(false)
 
-const fetchServices = async () => {
+// Paginación y Filtros
+const pagination = ref({
+  current_page: 1,
+  last_page: 1,
+  total: 0,
+  per_page: 10
+})
+
+const searchQuery = ref('')
+const statusFilter = ref('all') // 'all', 'active', 'inactive'
+
+// Estado del Modal
+const isModalOpen = ref(false)
+const modalMode = ref<'create' | 'edit'>('create')
+const editingService = ref<any>(null)
+const form = ref({
+  name: '',
+  description: '',
+  price: 0,
+  active: true
+})
+
+// Estado del menú de opciones (como en dashboard)
+const activeMenuId = ref<number | null>(null)
+
+const toggleMenu = (id: number) => {
+  activeMenuId.value = activeMenuId.value === id ? null : id
+}
+
+const fetchServices = async (page = 1) => {
+  isLoading.value = true
   try {
-    const response = await api.get('/products')
-    services.value = response.data.data
+    const params: any = { page }
+    if (searchQuery.value) params.search = searchQuery.value
+    if (statusFilter.value !== 'all') params.status = statusFilter.value
+
+    const response = await api.get('/services', { params })
+    services.value = response.data.data.data
+    pagination.value = {
+      current_page: response.data.data.current_page,
+      last_page: response.data.data.last_page,
+      total: response.data.data.total,
+      per_page: response.data.data.per_page
+    }
   } catch (error: any) {
     toast.error('Error al cargar los servicios')
   } finally {
@@ -19,12 +62,103 @@ const fetchServices = async () => {
   }
 }
 
+const handleSearch = () => {
+  fetchServices(1)
+}
+
+const changeStatusFilter = (status: string) => {
+  statusFilter.value = status
+  fetchServices(1)
+}
+
+const handleClickOutside = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
+  if (!target.closest('.menu-container')) {
+    activeMenuId.value = null
+  }
+}
+
 onMounted(() => {
   fetchServices()
+  window.addEventListener('click', handleClickOutside)
 })
 
+onUnmounted(() => {
+  window.removeEventListener('click', handleClickOutside)
+})
+
+const openCreateModal = () => {
+  modalMode.value = 'create'
+  form.value = { name: '', description: '', price: 0, active: true }
+  isModalOpen.value = true
+}
+
+const openEditModal = (service: any) => {
+  modalMode.value = 'edit'
+  editingService.value = service
+  form.value = {
+    name: service.name,
+    description: service.description || '',
+    price: service.price || 0,
+    active: !!service.active
+  }
+  isModalOpen.value = true
+  activeMenuId.value = null
+}
+
+const closeModal = () => {
+  isModalOpen.value = false
+  editingService.value = null
+}
+
+const saveService = async () => {
+  if (isSaving.value) return
+  isSaving.value = true
+
+  try {
+    let response
+    if (modalMode.value === 'create') {
+      response = await api.post('/services', form.value)
+    } else {
+      response = await api.put(`/services/${editingService.value.id}`, form.value)
+    }
+
+    toast.success(response.data.message || 'Operación exitosa')
+    closeModal()
+    fetchServices(pagination.value.current_page)
+  } catch (error: any) {
+    const msg = error.response?.data?.message || 'Error al guardar el servicio'
+    toast.error(msg)
+  } finally {
+    isSaving.value = false
+  }
+}
+
+const toggleStatus = async (service: any) => {
+  activeMenuId.value = null
+  try {
+    const response = await api.patch(`/services/${service.id}/status`)
+    toast.success(response.data.message)
+    fetchServices(pagination.value.current_page)
+  } catch (error: any) {
+    toast.error('Error al cambiar el estado')
+  }
+}
+
+const deleteService = async (id: number) => {
+  if (!confirm('¿Estás seguro de eliminar este servicio?')) return
+
+  try {
+    await api.delete(`/services/${id}`)
+    toast.success('Servicio eliminado')
+    fetchServices(pagination.value.current_page)
+  } catch (error: any) {
+    toast.error('Error al eliminar')
+  }
+}
+
 const goBack = () => {
-  router.push({ name: 'welcome' })
+  router.push('/')
 }
 
 const handleLogout = () => {
@@ -53,11 +187,29 @@ const handleLogout = () => {
             Servicios
           </h2>
           <div class="flex items-center justify-end">
-            <button
-              class="flex size-10 cursor-pointer items-center justify-center rounded-full bg-transparent text-text-main hover:bg-slate-50 transition-colors"
-            >
-              <span class="material-symbols-outlined text-2xl">tune</span>
-            </button>
+            <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-xl">
+              <button
+                @click="changeStatusFilter('all')"
+                :class="statusFilter === 'all' ? 'bg-white shadow-sm text-primary' : 'text-text-muted'"
+                class="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all"
+              >
+                Todos
+              </button>
+              <button
+                @click="changeStatusFilter('active')"
+                :class="statusFilter === 'active' ? 'bg-white shadow-sm text-accent-success' : 'text-text-muted'"
+                class="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all"
+              >
+                Activos
+              </button>
+              <button
+                @click="changeStatusFilter('inactive')"
+                :class="statusFilter === 'inactive' ? 'bg-white shadow-sm text-accent-danger' : 'text-text-muted'"
+                class="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all"
+              >
+                Inactivos
+              </button>
+            </div>
           </div>
         </div>
         <div class="relative group">
@@ -69,10 +221,20 @@ const handleLogout = () => {
             >
           </div>
           <input
-            class="block w-full rounded-xl border-none bg-slate-50 py-3.5 pl-11 pr-4 text-text-main placeholder:text-text-muted focus:ring-0 focus:bg-white focus:shadow-flat transition-all text-sm font-medium"
-            placeholder="Buscar servicios..."
+            v-model="searchQuery"
+            @keyup.enter="handleSearch"
+            class="block w-full rounded-xl border-none bg-slate-50 py-3.5 pl-11 pr-14 text-text-main placeholder:text-text-muted focus:ring-0 focus:bg-white focus:shadow-flat transition-all text-sm font-medium"
+            placeholder="Buscar por nombre... (Presiona Enter)"
             type="text"
           />
+          <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+            <button 
+              @click="handleSearch"
+              class="size-8 flex items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all"
+            >
+              <span class="material-symbols-outlined text-xl">keyboard_return</span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -81,70 +243,148 @@ const handleLogout = () => {
           <h3
             class="text-sm font-bold text-text-secondary uppercase tracking-wider"
           >
-            Listado
+            {{ pagination.total }} {{ pagination.total === 1 ? 'Servicio' : 'Servicios' }}
           </h3>
           <span
-            class="text-xs font-bold text-primary bg-blue-50 px-2.5 py-1 rounded-md"
-            >{{ services.length }} activos</span
+            v-if="statusFilter !== 'all' || searchQuery"
+            @click="changeStatusFilter('all'); searchQuery = ''"
+            class="text-[10px] font-bold text-primary cursor-pointer hover:underline"
           >
+            Limpiar filtros
+          </span>
         </div>
 
-        <div v-if="isLoading" class="flex justify-center py-10">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div v-if="isLoading" class="flex flex-col items-center justify-center py-20 animate-pulse">
+          <div class="size-12 rounded-full border-4 border-slate-100 border-t-primary animate-spin mb-4"></div>
+          <p class="text-sm font-bold text-slate-400 uppercase tracking-widest">Cargando...</p>
         </div>
 
-        <div v-else-if="services.length === 0" class="text-center py-10">
-          <span class="material-symbols-outlined text-5xl text-slate-300 mb-2">inventory_2</span>
-          <p class="text-slate-500">No hay servicios registrados</p>
+        <div v-else-if="services.length === 0" class="flex flex-col items-center justify-center py-20 text-center">
+          <div class="size-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+            <span class="material-symbols-outlined text-4xl text-slate-200">inventory_2</span>
+          </div>
+          <p class="text-slate-400 font-medium">No se encontraron servicios</p>
+          <button @click="openCreateModal" class="mt-4 text-primary font-bold text-sm hover:underline">Crear el primero</button>
         </div>
 
         <div
           v-for="service in services"
           :key="service.id"
-          class="group relative flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-3xl bg-surface-light p-4 shadow-subtle border border-transparent hover:border-slate-100 transition-all cursor-pointer"
+          @click="openEditModal(service)"
+          class="group relative flex items-center gap-4 rounded-3xl bg-surface-light p-4 shadow-xl shadow-slate-200/50 border-2 border-transparent hover:border-primary/20 transition-all duration-300 cursor-pointer"
         >
           <div
-            class="relative shrink-0 overflow-hidden rounded-2xl size-20 sm:size-16 bg-slate-100"
+            class="relative shrink-0 overflow-hidden rounded-2xl size-16 bg-slate-50 flex items-center justify-center border border-slate-100"
           >
-            <div
-              class="absolute inset-0 bg-center bg-no-repeat bg-cover"
-              style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCz1YIemTSmTol16__uJRGmxKtpTYlK9krtEHvkQhvP2Qdt7qCq3K5bxHoFzw_9m5r82Ibju_GgXWRGaV6VogbRIHSYwOE_ebZ6XaLzmmfid4QJBpqV3UMGaK8u3np8AyL6f9Yp_0MZrECGxaqKDHfOJOYMTI4q1MbeEqhG4Bk0yx-Ct6v8auQqXhAScLM63cOoedsi3_NmEE-48QIZ6Nsk-sac8nFTxYsQuTM637Hx5lQCaWmGCDxKKg3OgQT0JUJaBxTJCO_iDwg');"
-            ></div>
+            <span class="material-symbols-outlined text-slate-400 text-3xl">local_mall</span>
           </div>
-          <div class="flex flex-col flex-1 min-w-0 w-full">
-            <div class="flex justify-between items-start mb-1.5">
+          <div class="flex flex-col flex-1 min-w-0">
+            <div class="flex justify-between items-start mb-1">
               <p
-                class="text-text-main text-[17px] font-bold leading-tight truncate pr-2"
+                class="text-text-main text-base font-bold leading-tight truncate pr-2"
               >
                 {{ service.name }}
               </p>
-              <span
-                class="inline-flex items-center rounded-md bg-accent-success-bg px-2 py-1 text-[10px] font-bold text-accent-success uppercase tracking-wide"
-                >Activo</span
-              >
+              <div class="flex gap-2">
+                <span
+                  v-if="service.active"
+                  class="inline-flex items-center rounded-md bg-accent-success/10 px-2 py-0.5 text-[10px] font-black text-accent-success uppercase tracking-wider"
+                >Visible</span>
+                <span
+                  v-else
+                  class="inline-flex items-center rounded-md bg-accent-danger/10 px-2 py-0.5 text-[10px] font-black text-accent-danger uppercase tracking-wider"
+                >Oculto</span>
+              </div>
             </div>
-            <div
-              class="flex items-center flex-wrap gap-3 text-sm text-text-secondary"
-            >
-              <span class="font-bold text-text-main">${{ service.price }}</span>
-              <span class="text-slate-300 text-xs">|</span>
-              <span class="truncate">{{ service.description }}</span>
+            <p class="text-xs text-text-secondary line-clamp-1 mb-2">
+              {{ service.description || 'Sin descripción' }}
+            </p>
+            <div class="flex items-center gap-3">
+              <span class="text-sm font-bold text-primary">${{ service.price }}</span>
             </div>
           </div>
-          <button
-            class="absolute top-4 right-4 sm:static shrink-0 size-8 flex items-center justify-center rounded-full text-slate-300 hover:text-primary hover:bg-blue-50 transition-colors"
+          
+          <!-- Menu Options (Dashboard style) -->
+          <div class="relative">
+            <button 
+              @click.stop="toggleMenu(service.id)"
+              class="shrink-0 size-10 flex items-center justify-center rounded-full text-slate-300 hover:text-primary hover:bg-slate-50 transition-colors"
+            >
+              <span class="material-symbols-outlined text-2xl">more_vert</span>
+            </button>
+            
+            <div v-if="activeMenuId === service.id" 
+                 class="absolute right-0 top-10 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+              
+              <button @click.stop="openEditModal(service)" class="w-full px-4 py-2.5 text-left text-sm font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-3">
+                <span class="material-symbols-outlined text-[20px] text-blue-500">edit</span>
+                Editar Servicio
+              </button>
+              
+              <button @click.stop="toggleStatus(service)" class="w-full px-4 py-2.5 text-left text-sm font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-3">
+                <span class="material-symbols-outlined text-[20px]" :class="service.active ? 'text-amber-500' : 'text-emerald-500'">
+                  {{ service.active ? 'visibility_off' : 'visibility' }}
+                </span>
+                {{ service.active ? 'Ocultar' : 'Mostrar' }}
+              </button>
+              
+              <div class="border-t border-slate-50 my-1"></div>
+              
+              <button @click.stop="deleteService(service.id)" class="w-full px-4 py-2.5 text-left text-sm font-bold text-red-500 hover:bg-red-50 flex items-center gap-3">
+                <span class="material-symbols-outlined text-[20px]">delete</span>
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div v-if="pagination.last_page > 1" class="flex items-center justify-center gap-2 pt-6 pb-10">
+          <button 
+            @click="fetchServices(1)"
+            :disabled="pagination.current_page === 1"
+            class="size-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-text-muted disabled:opacity-30 disabled:grayscale transition-all hover:border-primary hover:text-primary"
           >
-            <span class="material-symbols-outlined text-xl">more_horiz</span>
+            <span class="material-symbols-outlined">first_page</span>
+          </button>
+          <button 
+            @click="fetchServices(pagination.current_page - 1)"
+            :disabled="pagination.current_page === 1"
+            class="size-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-text-muted disabled:opacity-30 transition-all hover:border-primary hover:text-primary"
+          >
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          
+          <div class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-text-main shadow-sm flex items-center gap-2">
+            <span class="text-primary">{{ pagination.current_page }}</span>
+            <span class="text-slate-300">/</span>
+            <span>{{ pagination.last_page }}</span>
+          </div>
+
+          <button 
+            @click="fetchServices(pagination.current_page + 1)"
+            :disabled="pagination.current_page === pagination.last_page"
+            class="size-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-text-muted disabled:opacity-30 transition-all hover:border-primary hover:text-primary"
+          >
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+          <button 
+            @click="fetchServices(pagination.last_page)"
+            :disabled="pagination.current_page === pagination.last_page"
+            class="size-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-text-muted disabled:opacity-30 disabled:grayscale transition-all hover:border-primary hover:text-primary"
+          >
+            <span class="material-symbols-outlined">last_page</span>
           </button>
         </div>
       </main>
 
       <div class="absolute bottom-24 right-6 z-30 md:bottom-28">
         <button
-          class="flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white rounded-2xl px-5 py-4 shadow-xl transition-transform active:scale-95 group"
+          @click="openCreateModal"
+          class="flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white rounded-2xl px-5 py-4 shadow-xl shadow-primary/20 transition-transform active:scale-95 group"
         >
-          <span class="material-symbols-outlined text-2xl">add</span>
-          <span class="font-bold text-sm tracking-wide">Nuevo</span>
+          <span class="material-symbols-outlined text-2xl group-hover:rotate-90 transition-transform">add</span>
+          <span class="font-bold text-sm tracking-wide">Nuevo Servicio</span>
         </button>
       </div>
 
@@ -184,6 +424,115 @@ const handleLogout = () => {
           Salir
         </button>
       </nav>
+
+      <!-- Modal Creation/Edition -->
+      <div v-if="isModalOpen" class="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-text-main/20 backdrop-blur-[2px]">
+        <div 
+          @click.self="!isSaving && closeModal()"
+          class="absolute inset-0"
+          :class="isSaving ? 'cursor-not-allowed' : ''"
+        ></div>
+        
+        <div class="relative w-full max-w-lg bg-white rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in slide-in-from-bottom-10 duration-300">
+          <div class="flex items-center justify-between mb-8">
+            <h3 class="text-2xl font-black text-text-main tracking-tight">
+              {{ modalMode === 'create' ? 'Nuevo Servicio' : 'Editar Servicio' }}
+            </h3>
+            <button 
+              @click="closeModal"
+              :disabled="isSaving"
+              class="size-10 flex items-center justify-center rounded-full bg-slate-50 text-text-muted hover:bg-slate-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+
+          <form @submit.prevent="saveService" class="space-y-6">
+            <div class="space-y-1.5">
+              <label class="text-xs font-black text-text-secondary uppercase tracking-widest pl-1">Nombre del Servicio</label>
+              <input 
+                v-model="form.name"
+                required
+                type="text"
+                placeholder="Ej. Corte de Cabello"
+                class="w-full rounded-2xl border-none bg-slate-50 px-5 py-4 text-text-main placeholder:text-text-muted focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all font-bold"
+              />
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="text-xs font-black text-text-secondary uppercase tracking-widest pl-1">Descripción</label>
+              <textarea 
+                v-model="form.description"
+                rows="3"
+                placeholder="Breve descripción de lo que incluye..."
+                class="w-full rounded-2xl border-none bg-slate-50 px-5 py-4 text-text-main placeholder:text-text-muted focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all font-bold resize-none"
+              ></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-1.5">
+                <label class="text-xs font-black text-text-secondary uppercase tracking-widest pl-1">Precio ($)</label>
+                <input 
+                  v-model.number="form.price"
+                  type="number"
+                  step="0.01"
+                  class="w-full rounded-2xl border-none bg-slate-50 px-5 py-4 text-text-main placeholder:text-text-muted focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all font-bold"
+                />
+              </div>
+              <div class="space-y-1.5 flex flex-col justify-end">
+                <label class="text-xs font-black text-text-secondary uppercase tracking-widest pl-1 mb-0.5">Visibilidad</label>
+                <div 
+                  @click="form.active = !form.active"
+                  class="relative flex items-center justify-between w-full h-[60px] rounded-2xl bg-slate-50 px-5 cursor-pointer select-none transition-all duration-300 border-2"
+                  :class="form.active ? 'bg-white border-accent-success shadow-md shadow-accent-success/10' : 'bg-slate-50 border-transparent'"
+                >
+                  <div class="flex flex-col">
+                    <span 
+                      class="text-[13px] font-black uppercase tracking-wider transition-colors"
+                      :class="form.active ? 'text-accent-success' : 'text-text-muted'"
+                    >
+                      {{ form.active ? 'Disponible' : 'Oculto' }}
+                    </span>
+                    <span class="text-[10px] font-medium text-text-secondary opacity-60">
+                      {{ form.active ? 'Visible en catálogo' : 'No se mostrará' }}
+                    </span>
+                  </div>
+                  
+                  <div 
+                    class="relative w-12 h-6 rounded-full transition-all duration-500 flex items-center px-1"
+                    :class="form.active ? 'bg-accent-success' : 'bg-slate-300'"
+                  >
+                    <div 
+                      class="bg-white w-4 h-4 rounded-full shadow-lg transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform"
+                      :class="form.active ? 'translate-x-6' : 'translate-x-0'"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-4 flex gap-3">
+              <button 
+                type="button" 
+                @click="closeModal"
+                :disabled="isSaving"
+                class="flex-1 py-4.5 rounded-2xl font-black uppercase tracking-widest text-text-muted hover:bg-slate-50 transition-all text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                Cancelar
+              </button>
+              <button 
+                type="submit"
+                :disabled="isSaving"
+                class="flex-[2] bg-primary hover:bg-primary-hover text-white py-4.5 rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg shadow-primary/25 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+              >
+                <span v-if="isSaving" class="material-symbols-outlined animate-spin">sync</span>
+                <span v-if="!isSaving">{{ modalMode === 'create' ? 'Crear Servicio' : 'Guardar Cambios' }}</span>
+                <span v-else>Guardando...</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 </template>

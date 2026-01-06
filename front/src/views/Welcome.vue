@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-
+ 
 const router = useRouter()
+ 
 
 const navigateToRegister = (role: number) => {
   router.push({ name: 'register', params: { role: role.toString() } })
