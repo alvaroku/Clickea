@@ -14,7 +14,10 @@ class ProductController extends Controller
      */
     public function index()
     {
-        return Product::all();
+        return response()->json([
+            'data' => Product::all(),
+            'message' => 'Productos listados exitosamente.'
+        ]);
     }
 
     /**
@@ -28,7 +31,12 @@ class ProductController extends Controller
             'price' => 'required|numeric'
         ]);
 
-        return Product::create($data);
+        $product = Product::create($data);
+
+        return response()->json([
+            'data' => $product,
+            'message' => 'Producto creado exitosamente.'
+        ], 201);
     }
 
     /**
@@ -36,7 +44,10 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-        return $product;
+        return response()->json([
+            'data' => $product,
+            'message' => 'Producto obtenido exitosamente.'
+        ]);
     }
 
     /**
@@ -52,7 +63,10 @@ class ProductController extends Controller
 
         $product->update($data);
 
-        return $product;
+        return response()->json([
+            'data' => $product,
+            'message' => 'Producto actualizado exitosamente.'
+        ]);
     }
 
     /**
@@ -62,6 +76,9 @@ class ProductController extends Controller
     {
         $product->delete();
 
-        return response()->noContent();
+        return response()->json([
+            'data' => null,
+            'message' => 'Producto eliminado exitosamente.'
+        ]);
     }
 }

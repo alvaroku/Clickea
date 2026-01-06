@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -14,20 +15,29 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name' => 'required|string',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|confirmed'
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'role' => 'nullable|string|exists:roles,name'
         ]);
+
+        $roleName = $request->role ?? 'user';
+        $role = Role::where('name', $roleName)->first();
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role_id' => $role ? $role->id : null,
         ]);
 
         return response()->json([
-            'token' => $user->createToken('api-token')->plainTextToken
-        ]);
+            'data' => [
+                'user' => $user->load('role'),
+                'token' => $user->createToken('api-token')->plainTextToken
+            ],
+            'message' => 'Usuario registrado exitosamente.'
+        ], 201);
     }
 
     public function login(Request $request)
@@ -40,13 +50,20 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['Credenciales incorrectas.'],
-            ]);
+            return response()->json([
+                'message' => 'Credenciales incorrectas.',
+                'errors' => [
+                    'email' => ['Las credenciales proporcionadas son incorrectas.']
+                ]
+            ], 422);
         }
 
         return response()->json([
-            'token' => $user->createToken('api-token')->plainTextToken
+            'data' => [
+                'user' => $user->load('role'),
+                'token' => $user->createToken('api-token')->plainTextToken
+            ],
+            'message' => 'Inicio de sesión exitoso.'
         ]);
     }
 
@@ -54,6 +71,9 @@ class AuthController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json(['message' => 'Token revocado']);
+        return response()->json([
+            'data' => null,
+            'message' => 'Sesión cerrada exitosamente.'
+        ]);
     }
 }
