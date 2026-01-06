@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/axios'
 import { toast } from 'vue3-toastify'
@@ -14,6 +14,28 @@ const form = ref({
 })
 
 const errors = ref<Record<string, string[]>>({})
+
+onMounted(() => {
+  const token = localStorage.getItem('token')
+  const userStr = localStorage.getItem('user')
+
+  if (token && userStr) {
+    try {
+      const user = JSON.parse(userStr)
+      const userRole = user.role?.name
+      if (userRole === 'superadmin') {
+        router.push({ name: 'superadmin-dashboard' })
+      } else if (userRole === 'admin') {
+        router.push({ name: 'admin-services' })
+      } else {
+        router.push({ name: 'user-services' })
+      }
+    } catch (e) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+    }
+  }
+})
 
 const goBack = () => {
   router.push({ name: 'welcome' })
