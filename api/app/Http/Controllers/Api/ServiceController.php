@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 class ServiceController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the resource for the admin/owner.
      */
     public function index(Request $request)
     {
@@ -25,6 +25,11 @@ class ServiceController extends Controller
             });
         }
 
+        // Filtro por categoría
+        if ($request->has('category_id') && $request->category_id !== 'all') {
+            $query->where('category_id', $request->category_id);
+        }
+
         // Filtro por estado
         if ($request->has('status') && $request->status !== 'all') {
             $active = $request->status === 'active';
@@ -36,6 +41,43 @@ class ServiceController extends Controller
         return response()->json([
             'data' => $services,
             'message' => 'Servicios listados exitosamente.'
+        ]);
+    }
+
+    /**
+     * Display a listing of all active services for clients.
+     */
+    public function catalog(Request $request)
+    {
+        $query = Service::where('active', true)->with(['category', 'owner']);
+
+        // Búsqueda por texto
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtro por categoría
+        if ($request->has('category_id') && $request->category_id !== 'all') {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // Filtro por género
+        if ($request->has('gender') && $request->gender !== 'all') {
+            $query->where(function($q) use ($request) {
+                $q->where('gender', $request->gender)
+                  ->orWhere('gender', 'both');
+            });
+        }
+
+        $services = $query->latest()->paginate(12);
+
+        return response()->json([
+            'data' => $services,
+            'message' => 'Catálogo obtenido exitosamente.'
         ]);
     }
 

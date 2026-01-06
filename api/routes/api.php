@@ -15,6 +15,9 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::apiResource('products', ProductController::class);
+
+    // Services
+    Route::get('/services/catalog', [ServiceController::class, 'catalog']);
     Route::apiResource('services', ServiceController::class);
     Route::patch('/services/{service}/status', [ServiceController::class, 'toggleStatus']);
 

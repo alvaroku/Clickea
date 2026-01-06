@@ -22,6 +22,7 @@ const pagination = ref({
 
 const searchQuery = ref('')
 const statusFilter = ref('all') // 'all', 'active', 'inactive'
+const categoryIdFilter = ref<string | number>('all')
 
 // Estado del Modal
 const isModalOpen = ref(false)
@@ -58,6 +59,7 @@ const fetchServices = async (page = 1) => {
     const params: any = { page }
     if (searchQuery.value) params.search = searchQuery.value
     if (statusFilter.value !== 'all') params.status = statusFilter.value
+    if (categoryIdFilter.value !== 'all') params.category_id = categoryIdFilter.value
 
     const response = await api.get('/services', { params })
     services.value = response.data.data.data
@@ -209,7 +211,51 @@ const handleLogout = () => {
             Servicios
           </h2>
           <div class="flex items-center justify-end">
-            <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-xl">
+            <button @click="handleLogout" class="flex size-10 items-center justify-center rounded-full hover:bg-slate-50 transition-colors text-slate-400">
+              <span class="material-symbols-outlined text-2xl">logout</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-3">
+          <div class="relative group">
+            <div
+              class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
+            >
+              <span class="material-symbols-outlined text-text-muted text-[22px]"
+                >search</span
+              >
+            </div>
+            <input
+              v-model="searchQuery"
+              @keyup.enter="handleSearch"
+              class="block w-full rounded-xl border-none bg-slate-50 py-3.5 pl-11 pr-14 text-text-main placeholder:text-text-muted focus:ring-0 focus:bg-white focus:shadow-flat transition-all text-sm font-medium"
+              placeholder="Buscar por nombre... (Presiona Enter)"
+              type="text"
+            />
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+              <button 
+                @click="handleSearch"
+                class="size-8 flex items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all"
+              >
+                <span class="material-symbols-outlined text-xl">keyboard_return</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="flex gap-2">
+            <select 
+              v-model="categoryIdFilter"
+              @change="handleSearch"
+              class="flex-1 rounded-xl border-none bg-slate-50 text-xs font-bold text-slate-700 focus:ring-1 focus:ring-primary px-4 py-3 appearance-none"
+            >
+              <option value="all">Todas las categorías</option>
+              <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+                {{ cat.name }}
+              </option>
+            </select>
+            
+            <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-xl shrink-0">
               <button
                 @click="changeStatusFilter('all')"
                 :class="statusFilter === 'all' ? 'bg-white shadow-sm text-primary' : 'text-text-muted'"
@@ -232,30 +278,6 @@ const handleLogout = () => {
                 Inactivos
               </button>
             </div>
-          </div>
-        </div>
-        <div class="relative group">
-          <div
-            class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
-          >
-            <span class="material-symbols-outlined text-text-muted text-[22px]"
-              >search</span
-            >
-          </div>
-          <input
-            v-model="searchQuery"
-            @keyup.enter="handleSearch"
-            class="block w-full rounded-xl border-none bg-slate-50 py-3.5 pl-11 pr-14 text-text-main placeholder:text-text-muted focus:ring-0 focus:bg-white focus:shadow-flat transition-all text-sm font-medium"
-            placeholder="Buscar por nombre... (Presiona Enter)"
-            type="text"
-          />
-          <div class="absolute inset-y-0 right-0 flex items-center pr-3">
-            <button 
-              @click="handleSearch"
-              class="size-8 flex items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all"
-            >
-              <span class="material-symbols-outlined text-xl">keyboard_return</span>
-            </button>
           </div>
         </div>
       </header>

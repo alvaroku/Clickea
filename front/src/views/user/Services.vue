@@ -6,12 +6,40 @@ import { toast } from 'vue3-toastify'
 
 const router = useRouter()
 const services = ref<any[]>([])
+const categories = ref<any[]>([])
 const isLoading = ref(true)
+const searchTerm = ref('')
+const selectedCategoryId = ref<string | number>('all')
 
-const fetchServices = async () => {
+const pagination = ref({
+  current_page: 1,
+  last_page: 1,
+  total: 0
+})
+
+const fetchCategories = async () => {
   try {
-    const response = await api.get('/products')
-    services.value = response.data.data
+    const response = await api.get('/categories/all')
+    categories.value = response.data.data
+  } catch (error) {
+    console.error('Error fetching categories:', error)
+  }
+}
+
+const fetchServices = async (page = 1) => {
+  isLoading.value = true
+  try {
+    const params: any = { page }
+    if (searchTerm.value) params.search = searchTerm.value
+    if (selectedCategoryId.value !== 'all') params.category_id = selectedCategoryId.value
+
+    const response = await api.get('/services/catalog', { params })
+    services.value = response.data.data.data
+    pagination.value = {
+      current_page: response.data.data.current_page,
+      last_page: response.data.data.last_page,
+      total: response.data.data.total
+    }
   } catch (error: any) {
     toast.error('Error al cargar los servicios')
   } finally {
@@ -19,8 +47,14 @@ const fetchServices = async () => {
   }
 }
 
+const selectCategory = (id: string | number) => {
+  selectedCategoryId.value = id
+  fetchServices(1)
+}
+
 onMounted(() => {
   fetchServices()
+  fetchCategories()
 })
 
 const handleLogout = () => {
@@ -65,14 +99,17 @@ const handleLogout = () => {
               <span class="material-symbols-outlined" style="font-size: 26px">search</span>
             </div>
             <input
+              v-model="searchTerm"
+              @keyup.enter="fetchServices(1)"
               class="h-14 w-full border-none bg-transparent px-2 text-base font-semibold placeholder:text-slate-400 focus:ring-0 text-slate-900"
-              placeholder="¿Qué buscas celebrar?"
+              placeholder="¿Qué servicio buscas?"
               type="text"
             />
             <button
+              @click="fetchServices(1)"
               class="flex h-14 w-14 items-center justify-center text-primary hover:bg-slate-50 rounded-r-2xl transition-colors"
             >
-              <span class="material-symbols-outlined" style="font-size: 26px">tune</span>
+              <span class="material-symbols-outlined" style="font-size: 26px">keyboard_return</span>
             </button>
           </div>
         </div>
@@ -80,37 +117,38 @@ const handleLogout = () => {
         <div class="mt-6 w-full">
           <div class="flex w-full gap-3 overflow-x-auto px-6 py-2 no-scrollbar">
             <button
-              class="flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-6 transition-transform active:scale-95 hover:bg-primary/90 shadow-sm"
+              @click="selectCategory('all')"
+              :class="selectedCategoryId === 'all' ? 'bg-primary text-white shadow-md' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'"
+              class="flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl px-6 transition-transform active:scale-95"
             >
-              <span class="material-symbols-outlined text-white" style="font-size: 20px">grid_view</span>
-              <span class="text-sm font-bold text-white">Todos</span>
+              <span class="material-symbols-outlined" :class="selectedCategoryId === 'all' ?'text-white' : 'text-slate-400'" style="font-size: 20px">grid_view</span>
+              <span class="text-sm font-bold">Todos</span>
             </button>
             <button
-              class="flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-white border border-slate-200 px-6 transition-transform active:scale-95 hover:bg-slate-50"
+              v-for="cat in categories"
+              :key="cat.id"
+              @click="selectCategory(cat.id)"
+              :class="selectedCategoryId === cat.id ? 'bg-primary text-white shadow-md' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'"
+              class="flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl px-6 transition-transform active:scale-95"
             >
-              <span class="material-symbols-outlined text-slate-400" style="font-size: 20px">restaurant</span>
-              <span class="text-sm font-bold text-slate-600">Catering</span>
-            </button>
-            <button
-              class="flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-white border border-slate-200 px-6 transition-transform active:scale-95 hover:bg-slate-50"
-            >
-              <span class="material-symbols-outlined text-slate-400" style="font-size: 20px">music_note</span>
-              <span class="text-sm font-bold text-slate-600">Música</span>
+              <span class="material-symbols-outlined" :class="selectedCategoryId === cat.id ?'text-white' : 'text-slate-400'" style="font-size: 20px">category</span>
+              <span class="text-sm font-bold capitalize">{{ cat.name }}</span>
             </button>
           </div>
         </div>
 
         <div class="px-6 pt-10 pb-4 flex items-end justify-between">
           <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">
-            Populares
+            {{ selectedCategoryId === 'all' ? 'Todos los servicios' : 'En esta categoría' }}
           </h3>
-          <a href="#" class="text-sm font-bold text-primary hover:text-primary/80 transition-colors mb-0.5">
-            Ver todos
-          </a>
+          <span v-if="pagination.total" class="text-xs font-bold text-primary bg-cyan-50 px-2.5 py-1 rounded-md mb-1">
+            {{ pagination.total }} {{ pagination.total === 1 ? 'resultado' : 'resultados' }}
+          </span>
         </div>
 
-        <div v-if="isLoading" class="flex justify-center py-10">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div v-if="isLoading" class="flex flex-col items-center justify-center py-20 gap-4">
+          <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+          <p class="text-slate-400 text-sm font-bold">Descubriendo servicios...</p>
         </div>
 
         <div v-else-if="services.length === 0" class="text-center py-10">
@@ -138,8 +176,8 @@ const handleLogout = () => {
                   <span
                     class="inline-flex items-center rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-slate-900 shadow-sm border border-slate-100"
                   >
-                    <span class="material-symbols-outlined mr-1.5 text-primary" style="font-size: 14px">restaurant</span>
-                    Servicio
+                    <span class="material-symbols-outlined mr-1.5 text-primary" style="font-size: 14px">category</span>
+                    {{ service.category?.name || 'Varios' }}
                   </span>
                 </div>
               </div>
@@ -151,6 +189,9 @@ const handleLogout = () => {
                     >
                       {{ service.name }}
                     </h3>
+                    <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mt-1">
+                      Por: {{ service.owner?.name || 'Staff' }}
+                    </p>
                     <p class="text-sm font-semibold text-slate-500 mt-1.5 line-clamp-1">
                       {{ service.description }}
                     </p>
@@ -166,7 +207,7 @@ const handleLogout = () => {
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Precio</span>
                     <span class="text-2xl font-black text-primary">
                       ${{ service.price }}
-                      <span class="text-sm font-bold text-slate-400">/evento</span>
+                      <span class="text-sm font-bold text-slate-400"></span>
                     </span>
                   </div>
                   <button
@@ -178,6 +219,45 @@ const handleLogout = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Paginación -->
+        <div v-if="pagination.last_page > 1" class="flex items-center justify-center gap-2 pt-6 pb-10">
+          <button 
+            @click="fetchServices(1)"
+            :disabled="pagination.current_page === 1"
+            class="size-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 disabled:opacity-30 disabled:grayscale transition-all hover:border-primary hover:text-primary"
+          >
+            <span class="material-symbols-outlined">first_page</span>
+          </button>
+          <button 
+            @click="fetchServices(pagination.current_page - 1)"
+            :disabled="pagination.current_page === 1"
+            class="size-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 disabled:opacity-30 transition-all hover:border-primary hover:text-primary"
+          >
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          
+          <div class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-900 shadow-sm flex items-center gap-2">
+            <span class="text-primary">{{ pagination.current_page }}</span>
+            <span class="text-slate-300">/</span>
+            <span>{{ pagination.last_page }}</span>
+          </div>
+
+          <button 
+            @click="fetchServices(pagination.current_page + 1)"
+            :disabled="pagination.current_page === pagination.last_page"
+            class="size-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 disabled:opacity-30 transition-all hover:border-primary hover:text-primary"
+          >
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+          <button 
+            @click="fetchServices(pagination.last_page)"
+            :disabled="pagination.current_page === pagination.last_page"
+            class="size-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 disabled:opacity-30 disabled:grayscale transition-all hover:border-primary hover:text-primary"
+          >
+            <span class="material-symbols-outlined">last_page</span>
+          </button>
         </div>
       </main>
 
