@@ -8,6 +8,7 @@ const router = useRouter();
 const users = ref<any[]>([]);
 const pagination = ref<any>({});
 const isLoading = ref(true);
+const isSaving = ref(false);
 const searchTerm = ref('');
 const statusFilter = ref('all');
 const currentPage = ref(1);
@@ -88,14 +89,15 @@ const openEditModal = (user: any) => {
 
 const handleSubmit = async () => {
   errors.value = {};
+  isSaving.value = true;
   try {
+    let response;
     if (isEditing.value && currentUserId.value) {
-      await api.put(`/users/${currentUserId.value}`, form.value);
-      toast.success('Usuario actualizado correctamente');
+      response = await api.put(`/users/${currentUserId.value}`, form.value);
     } else {
-      await api.post('/users', form.value);
-      toast.success('Usuario creado y correo enviado');
+      response = await api.post('/users', form.value);
     }
+    toast.success(response.data.message || 'Operación realizada correctamente');
     isModalOpen.value = false;
     fetchUsers(currentPage.value);
   } catch (error: any) {
@@ -104,6 +106,8 @@ const handleSubmit = async () => {
     } else {
       toast.error(error.response?.data?.message || 'Error al guardar usuario');
     }
+  } finally {
+    isSaving.value = false;
   }
 };
 
@@ -379,7 +383,7 @@ const goBack = () => {
                   {{ isEditing ? 'Modifica los datos del perfil' : 'Registra un nuevo colaborador o cliente' }}
                 </p>
               </div>
-              <button @click="isModalOpen = false" class="size-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors">
+              <button @click="isModalOpen = false" :disabled="isSaving" class="size-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 <span class="material-symbols-outlined">close</span>
               </button>
             </div>
@@ -389,7 +393,8 @@ const goBack = () => {
                 <label class="block">
                   <span class="text-sm font-bold text-slate-900 ml-1">Nombre Completo</span>
                   <input v-model="form.name" type="text" 
-                    class="mt-1 w-full rounded-2xl bg-slate-50 border-none h-14 px-4 text-base font-medium focus:ring-1 focus:ring-primary focus:bg-white transition-all shadow-input"
+                    :disabled="isSaving"
+                    class="mt-1 w-full rounded-2xl bg-slate-50 border-none h-14 px-4 text-base font-medium focus:ring-1 focus:ring-primary focus:bg-white transition-all shadow-input disabled:opacity-60"
                     placeholder="Ej. Juan Pérez" />
                   <p v-if="errors.name" class="text-xs text-red-500 mt-1 ml-1 font-medium">{{ errors.name[0] }}</p>
                 </label>
@@ -397,7 +402,8 @@ const goBack = () => {
                 <label class="block">
                   <span class="text-sm font-bold text-slate-900 ml-1">Correo Electrónico</span>
                   <input v-model="form.email" type="email" 
-                    class="mt-1 w-full rounded-2xl bg-slate-50 border-none h-14 px-4 text-base font-medium focus:ring-1 focus:ring-primary focus:bg-white transition-all shadow-input"
+                    :disabled="isSaving"
+                    class="mt-1 w-full rounded-2xl bg-slate-50 border-none h-14 px-4 text-base font-medium focus:ring-1 focus:ring-primary focus:bg-white transition-all shadow-input disabled:opacity-60"
                     placeholder="correo@ejemplo.com" />
                   <p v-if="errors.email" class="text-xs text-red-500 mt-1 ml-1 font-medium">{{ errors.email[0] }}</p>
                 </label>
@@ -405,15 +411,15 @@ const goBack = () => {
                 <div class="grid grid-cols-2 gap-4">
                   <div class="space-y-2">
                     <span class="text-sm font-bold text-slate-900 ml-1">Rol</span>
-                    <select v-model="form.role" class="w-full rounded-2xl bg-slate-50 border-none h-14 px-4 text-base font-bold focus:ring-1 focus:ring-primary focus:bg-white transition-all appearance-none">
+                    <select v-model="form.role" :disabled="isSaving" class="w-full rounded-2xl bg-slate-50 border-none h-14 px-4 text-base font-bold focus:ring-1 focus:ring-primary focus:bg-white transition-all appearance-none disabled:opacity-60">
                       <option value="user">Cliente</option>
                       <option value="admin">Administrador</option>
                       <option value="superadmin" v-if="isEditing && form.role === 'superadmin'">Superadmin</option>
                     </select>
                   </div>
                   <div class="space-y-2 flex flex-col justify-end">
-                    <label class="flex items-center gap-3 bg-slate-50 h-14 rounded-2xl px-4 cursor-pointer hover:bg-slate-100 transition-colors">
-                      <input type="checkbox" v-model="form.active" class="rounded text-primary focus:ring-primary w-5 h-5" />
+                    <label class="flex items-center gap-3 bg-slate-50 h-14 rounded-2xl px-4 cursor-pointer hover:bg-slate-100 transition-colors" :class="{ 'opacity-60 cursor-not-allowed': isSaving }">
+                      <input type="checkbox" v-model="form.active" :disabled="isSaving" class="rounded text-primary focus:ring-primary w-5 h-5" />
                       <span class="text-sm font-bold text-slate-900">Activo</span>
                     </label>
                   </div>
@@ -424,7 +430,8 @@ const goBack = () => {
                     {{ isEditing ? 'Nueva Contraseña (opcional)' : 'Contraseña' }}
                   </span>
                   <input v-model="form.password" type="password" 
-                    class="mt-1 w-full rounded-2xl bg-slate-50 border-none h-14 px-4 text-base font-medium focus:ring-1 focus:ring-primary focus:bg-white transition-all shadow-input"
+                    :disabled="isSaving"
+                    class="mt-1 w-full rounded-2xl bg-slate-50 border-none h-14 px-4 text-base font-medium focus:ring-1 focus:ring-primary focus:bg-white transition-all shadow-input disabled:opacity-60"
                     placeholder="••••••••" />
                   <p v-if="!isEditing" class="text-[10px] text-slate-400 mt-1 ml-1 font-bold italic">
                     * Si se deja vacío, el sistema generará una y la enviará por correo.
@@ -435,12 +442,15 @@ const goBack = () => {
 
               <div class="pt-4 flex flex-col gap-3">
                 <button type="submit" 
-                        class="w-full bg-primary text-white font-bold text-lg h-16 rounded-2xl transition-all active:scale-[0.98] shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2">
-                  <span class="material-symbols-outlined">save</span>
-                  {{ isEditing ? 'Guardar Cambios' : 'Crear Usuario' }}
+                        :disabled="isSaving"
+                        class="w-full bg-primary text-white font-bold text-lg h-16 rounded-2xl transition-all active:scale-[0.98] shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-wait">
+                  <span v-if="isSaving" class="animate-spin material-symbols-outlined">sync</span>
+                  <span v-else class="material-symbols-outlined">save</span>
+                  {{ isSaving ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Crear Usuario') }}
                 </button>
                 <button type="button" @click="isModalOpen = false" 
-                        class="w-full bg-slate-100 text-slate-600 font-bold text-lg h-16 rounded-2xl transition-all hover:bg-slate-200">
+                        :disabled="isSaving"
+                        class="w-full bg-slate-100 text-slate-600 font-bold text-lg h-16 rounded-2xl transition-all hover:bg-slate-200 disabled:opacity-50">
                   Cancelar
                 </button>
               </div>
