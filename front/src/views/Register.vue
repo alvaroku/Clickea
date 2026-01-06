@@ -116,6 +116,49 @@ const goToLogin = () => {
           </p>
         </div>
 
+        <!-- Role Selector -->
+        <div class="flex flex-col gap-3 mb-8">
+          <label class="text-sm font-bold text-slate-500 ml-1">¿Cómo deseas registrarte?</label>
+          <div class="grid grid-cols-2 gap-4">
+            <label class="cursor-pointer group relative">
+              <input 
+                type="radio" 
+                class="peer sr-only" 
+                name="role" 
+                value="user" 
+                v-model="internalRole"
+              />
+              <div
+                class="flex flex-col items-center gap-3 p-5 rounded-2xl border border-slate-200 bg-white text-slate-500 transition-all peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary hover:bg-slate-50"
+              >
+                <span class="material-symbols-outlined text-4xl" :style="internalRole === 'user' ? 'font-variation-settings: \'FILL\' 1' : ''">sentiment_satisfied</span>
+                <span class="font-bold">Soy Cliente</span>
+                <div class="absolute top-3 right-3 hidden peer-checked:block text-primary">
+                  <span class="material-symbols-outlined text-xl">check_circle</span>
+                </div>
+              </div>
+            </label>
+            <label class="cursor-pointer group relative">
+              <input 
+                type="radio" 
+                class="peer sr-only" 
+                name="role" 
+                value="admin" 
+                v-model="internalRole"
+              />
+              <div
+                class="flex flex-col items-center gap-3 p-5 rounded-2xl border border-slate-200 bg-white text-slate-500 transition-all peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary hover:bg-slate-50"
+              >
+                <span class="material-symbols-outlined text-4xl" :style="internalRole === 'admin' ? 'font-variation-settings: \'FILL\' 1' : ''">storefront</span>
+                <span class="font-bold">Administrador</span>
+                <div class="absolute top-3 right-3 hidden peer-checked:block text-primary">
+                  <span class="material-symbols-outlined text-xl">check_circle</span>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
         <div class="flex flex-col gap-5">
           <label class="flex flex-col gap-2 group">
             <span class="text-sm font-bold text-slate-900 ml-1">Nombre Completo</span>
