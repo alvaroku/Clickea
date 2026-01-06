@@ -5,6 +5,7 @@ import Register from '../views/Register.vue'
 import AdminServices from '../views/admin/Services.vue'
 import UserServices from '../views/user/Services.vue'
 import SuperAdminDashboard from '../views/superadmin/Dashboard.vue'
+import SuperAdminCategories from '../views/superadmin/Categories.vue'
 
 const routes = [
   {
@@ -39,6 +40,12 @@ const routes = [
     path: '/superadmin/dashboard',
     name: 'superadmin-dashboard',
     component: SuperAdminDashboard,
+    meta: { requiresAuth: true, role: 'superadmin' }
+  },
+  {
+    path: '/superadmin/categories',
+    name: 'superadmin-categories',
+    component: SuperAdminCategories,
     meta: { requiresAuth: true, role: 'superadmin' }
   }
 ]

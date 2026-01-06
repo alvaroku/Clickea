@@ -8,6 +8,7 @@ const router = useRouter()
 
 // Estados de carga y datos
 const services = ref<any[]>([])
+const categories = ref<any[]>([])
 const isLoading = ref(true)
 const isSaving = ref(false)
 
@@ -30,11 +31,22 @@ const form = ref({
   name: '',
   description: '',
   price: 0,
-  active: true
+  active: true,
+  category_id: null as number | null,
+  gender: 'both' as 'male' | 'female' | 'both' | null
 })
 
 // Estado del menú de opciones (como en dashboard)
 const activeMenuId = ref<number | null>(null)
+
+const fetchCategories = async () => {
+  try {
+    const response = await api.get('/categories/all')
+    categories.value = response.data.data
+  } catch (error) {
+    console.error('Error fetching categories:', error)
+  }
+}
 
 const toggleMenu = (id: number) => {
   activeMenuId.value = activeMenuId.value === id ? null : id
@@ -80,6 +92,7 @@ const handleClickOutside = (event: MouseEvent) => {
 
 onMounted(() => {
   fetchServices()
+  fetchCategories()
   window.addEventListener('click', handleClickOutside)
 })
 
@@ -89,7 +102,14 @@ onUnmounted(() => {
 
 const openCreateModal = () => {
   modalMode.value = 'create'
-  form.value = { name: '', description: '', price: 0, active: true }
+  form.value = { 
+    name: '', 
+    description: '', 
+    price: 0, 
+    active: true,
+    category_id: null,
+    gender: 'both'
+  }
   isModalOpen.value = true
 }
 
@@ -100,7 +120,9 @@ const openEditModal = (service: any) => {
     name: service.name,
     description: service.description || '',
     price: service.price || 0,
-    active: !!service.active
+    active: !!service.active,
+    category_id: service.category_id,
+    gender: service.gender || 'both'
   }
   isModalOpen.value = true
   activeMenuId.value = null
@@ -239,18 +261,10 @@ const handleLogout = () => {
       </header>
 
       <main class="flex-1 px-6 space-y-5 pb-28 pt-6 overflow-y-auto no-scrollbar">
-        <div class="flex justify-between items-center">
-          <h3
-            class="text-sm font-bold text-text-secondary uppercase tracking-wider"
-          >
+        <div class="flex justify-between items-center text-xs font-bold text-slate-400 uppercase tracking-widest">
+          <h3>Servicios registrados</h3>
+          <span v-if="pagination.total" class="text-primary bg-cyan-50 px-2.5 py-1 rounded-md">
             {{ pagination.total }} {{ pagination.total === 1 ? 'Servicio' : 'Servicios' }}
-          </h3>
-          <span
-            v-if="statusFilter !== 'all' || searchQuery"
-            @click="changeStatusFilter('all'); searchQuery = ''"
-            class="text-[10px] font-bold text-primary cursor-pointer hover:underline"
-          >
-            Limpiar filtros
           </span>
         </div>
 
@@ -301,6 +315,12 @@ const handleLogout = () => {
             </p>
             <div class="flex items-center gap-3">
               <span class="text-sm font-bold text-primary">${{ service.price }}</span>
+              <span v-if="service.category" class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md uppercase">
+                {{ service.category.name }}
+              </span>
+              <span class="text-[10px] font-bold text-slate-400 uppercase">
+                {{ service.gender === 'male' ? 'Hombre' : service.gender === 'female' ? 'Mujer' : 'Ambos' }}
+              </span>
             </div>
           </div>
           
@@ -338,24 +358,24 @@ const handleLogout = () => {
           </div>
         </div>
 
-        <!-- Pagination -->
+        <!-- Paginación -->
         <div v-if="pagination.last_page > 1" class="flex items-center justify-center gap-2 pt-6 pb-10">
           <button 
             @click="fetchServices(1)"
             :disabled="pagination.current_page === 1"
-            class="size-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-text-muted disabled:opacity-30 disabled:grayscale transition-all hover:border-primary hover:text-primary"
+            class="size-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 disabled:opacity-30 disabled:grayscale transition-all hover:border-primary hover:text-primary"
           >
             <span class="material-symbols-outlined">first_page</span>
           </button>
           <button 
             @click="fetchServices(pagination.current_page - 1)"
             :disabled="pagination.current_page === 1"
-            class="size-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-text-muted disabled:opacity-30 transition-all hover:border-primary hover:text-primary"
+            class="size-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 disabled:opacity-30 transition-all hover:border-primary hover:text-primary"
           >
             <span class="material-symbols-outlined">chevron_left</span>
           </button>
           
-          <div class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-text-main shadow-sm flex items-center gap-2">
+          <div class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-900 shadow-sm flex items-center gap-2">
             <span class="text-primary">{{ pagination.current_page }}</span>
             <span class="text-slate-300">/</span>
             <span>{{ pagination.last_page }}</span>
@@ -364,14 +384,14 @@ const handleLogout = () => {
           <button 
             @click="fetchServices(pagination.current_page + 1)"
             :disabled="pagination.current_page === pagination.last_page"
-            class="size-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-text-muted disabled:opacity-30 transition-all hover:border-primary hover:text-primary"
+            class="size-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 disabled:opacity-30 transition-all hover:border-primary hover:text-primary"
           >
             <span class="material-symbols-outlined">chevron_right</span>
           </button>
           <button 
             @click="fetchServices(pagination.last_page)"
             :disabled="pagination.current_page === pagination.last_page"
-            class="size-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-text-muted disabled:opacity-30 disabled:grayscale transition-all hover:border-primary hover:text-primary"
+            class="size-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 disabled:opacity-30 disabled:grayscale transition-all hover:border-primary hover:text-primary"
           >
             <span class="material-symbols-outlined">last_page</span>
           </button>
@@ -467,6 +487,32 @@ const handleLogout = () => {
                 placeholder="Breve descripción de lo que incluye..."
                 class="w-full rounded-2xl border-none bg-slate-50 px-5 py-4 text-text-main placeholder:text-text-muted focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all font-bold resize-none"
               ></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-1.5">
+                <label class="text-xs font-black text-text-secondary uppercase tracking-widest pl-1">Categoría</label>
+                <select 
+                  v-model="form.category_id"
+                  class="w-full rounded-2xl border-none bg-slate-50 px-5 py-4 text-text-main focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all font-bold"
+                >
+                  <option :value="null">Sin Categoría</option>
+                  <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+                    {{ cat.name }}
+                  </option>
+                </select>
+              </div>
+              <div class="space-y-1.5">
+                <label class="text-xs font-black text-text-secondary uppercase tracking-widest pl-1">Dirigido a</label>
+                <select 
+                  v-model="form.gender"
+                  class="w-full rounded-2xl border-none bg-slate-50 px-5 py-4 text-text-main focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all font-bold"
+                >
+                  <option value="both">Ambos (Unisex)</option>
+                  <option value="male">Hombre</option>
+                  <option value="female">Mujer</option>
+                </select>
+              </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">

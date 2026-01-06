@@ -300,44 +300,42 @@ const goBack = () => {
           </div>
         </div>
 
-        <!-- Pagination -->
-        <div v-if="pagination.last_page > 1" class="flex items-center justify-center gap-2 pt-4 pb-10">
+        <!-- Paginación -->
+        <div v-if="pagination.last_page > 1" class="flex items-center justify-center gap-2 pt-6 pb-10">
           <button 
-            @click="fetchUsers(1)" 
+            @click="fetchUsers(1)"
             :disabled="pagination.current_page === 1"
-            class="size-10 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 disabled:opacity-30 hover:bg-primary hover:text-white transition-all shadow-sm"
-            title="Primera página"
+            class="size-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 disabled:opacity-30 disabled:grayscale transition-all hover:border-primary hover:text-primary"
           >
-            <span class="material-symbols-outlined text-xl">first_page</span>
+            <span class="material-symbols-outlined">first_page</span>
+          </button>
+          <button 
+            @click="fetchUsers(pagination.current_page - 1)"
+            :disabled="pagination.current_page === 1"
+            class="size-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 disabled:opacity-30 transition-all hover:border-primary hover:text-primary"
+          >
+            <span class="material-symbols-outlined">chevron_left</span>
           </button>
           
-          <button 
-            @click="fetchUsers(pagination.current_page - 1)" 
-            :disabled="pagination.current_page === 1"
-            class="size-10 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 disabled:opacity-30 hover:bg-primary hover:text-white transition-all shadow-sm"
-          >
-            <span class="material-symbols-outlined text-xl">chevron_left</span>
-          </button>
-
-          <div class="flex items-center bg-white px-4 h-10 rounded-xl border border-slate-100 shadow-sm font-bold text-sm text-slate-700">
-            {{ pagination.current_page }} <span class="text-slate-300 mx-2">/</span> {{ pagination.last_page }}
+          <div class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-900 shadow-sm flex items-center gap-2">
+            <span class="text-primary">{{ pagination.current_page }}</span>
+            <span class="text-slate-300">/</span>
+            <span>{{ pagination.last_page }}</span>
           </div>
 
           <button 
-            @click="fetchUsers(pagination.current_page + 1)" 
+            @click="fetchUsers(pagination.current_page + 1)"
             :disabled="pagination.current_page === pagination.last_page"
-            class="size-10 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 disabled:opacity-30 hover:bg-primary hover:text-white transition-all shadow-sm"
+            class="size-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 disabled:opacity-30 transition-all hover:border-primary hover:text-primary"
           >
-            <span class="material-symbols-outlined text-xl">chevron_right</span>
+            <span class="material-symbols-outlined">chevron_right</span>
           </button>
-
           <button 
-            @click="fetchUsers(pagination.last_page)" 
+            @click="fetchUsers(pagination.last_page)"
             :disabled="pagination.current_page === pagination.last_page"
-            class="size-10 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 disabled:opacity-30 hover:bg-primary hover:text-white transition-all shadow-sm"
-            title="Última página"
+            class="size-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 disabled:opacity-30 disabled:grayscale transition-all hover:border-primary hover:text-primary"
           >
-            <span class="material-symbols-outlined text-xl">last_page</span>
+            <span class="material-symbols-outlined">last_page</span>
           </button>
         </div>
       </main>
@@ -360,9 +358,9 @@ const goBack = () => {
           <span class="material-symbols-outlined text-[26px] fill-icon">group</span>
           Usuarios
         </button>
-        <button @click="router.push('/admin/services')" class="flex flex-col items-center gap-1.5 hover:text-primary transition-colors">
-          <span class="material-symbols-outlined text-[26px]">inventory_2</span>
-          Servicios
+        <button @click="router.push('/superadmin/categories')" class="flex flex-col items-center gap-1.5 hover:text-primary transition-colors">
+          <span class="material-symbols-outlined text-[26px]">category</span>
+          Categorías
         </button>
         <button class="flex flex-col items-center gap-1.5 hover:text-primary transition-colors">
           <span class="material-symbols-outlined text-[26px]">settings</span>

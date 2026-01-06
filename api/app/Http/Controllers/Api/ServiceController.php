@@ -14,7 +14,7 @@ class ServiceController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Service::where('user_id', Auth::id());
+        $query = Service::where('user_id', Auth::id())->with('category');
 
         // Búsqueda por texto (nombre o descripción)
         if ($request->has('search') && !empty($request->search)) {
@@ -48,7 +48,9 @@ class ServiceController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'price' => 'nullable|numeric|min:0',
-            'active' => 'boolean'
+            'active' => 'boolean',
+            'category_id' => 'nullable|exists:categories,id',
+            'gender' => 'nullable|in:male,female,both'
         ]);
 
         $service = Service::create([
@@ -90,7 +92,9 @@ class ServiceController extends Controller
             'name' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
             'price' => 'nullable|numeric|min:0',
-            'active' => 'boolean'
+            'active' => 'boolean',
+            'category_id' => 'nullable|exists:categories,id',
+            'gender' => 'nullable|in:male,female,both'
         ]);
 
         $service->update($validated);

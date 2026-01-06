@@ -8,9 +8,11 @@ class Service extends Model
 {
     protected $fillable = [
         'user_id',
+        'category_id',
         'name',
         'description',
         'price',
+        'gender',
         'active',
     ];
 
@@ -25,5 +27,10 @@ class Service extends Model
     public function owner()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
     }
 }
