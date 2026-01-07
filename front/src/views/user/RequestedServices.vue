@@ -512,11 +512,6 @@ onMounted(() => {
               >manage_search</span
             >
           </button>
-          <button
-            class="relative -top-8 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform active:scale-90 hover:bg-primary/90"
-          >
-            <span class="material-symbols-outlined" style="font-size: 32px">add</span>
-          </button>
           <button class="group flex flex-col items-center gap-1.5 w-14">
             <div class="flex h-10 w-12 items-center justify-center rounded-xl bg-primary/10">
               <span

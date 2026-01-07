@@ -282,11 +282,6 @@ const handleLogout = () => {
               >
             </div>
           </button>
-          <button
-            class="relative -top-8 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform active:scale-90 hover:bg-primary/90"
-          >
-            <span class="material-symbols-outlined" style="font-size: 32px">add</span>
-          </button>
           <button @click="router.push({ name: 'user-requests' })" class="group flex flex-col items-center gap-1.5 w-14">
             <span
               class="material-symbols-outlined text-slate-400 transition-colors group-hover:text-primary"
@@ -294,6 +289,7 @@ const handleLogout = () => {
               >receipt_long</span
             >
           </button>
+
           <button @click="handleLogout" class="group flex flex-col items-center gap-1.5 w-14">
             <span
               class="material-symbols-outlined text-slate-400 transition-colors group-hover:text-primary"

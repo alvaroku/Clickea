@@ -290,9 +290,9 @@ const handleLogout = () => {
           </span>
         </div>
 
-        <div v-if="isLoading" class="flex flex-col items-center justify-center py-20 animate-pulse">
-          <div class="size-12 rounded-full border-4 border-slate-100 border-t-primary animate-spin mb-4"></div>
-          <p class="text-sm font-bold text-slate-400 uppercase tracking-widest">Cargando...</p>
+        <div v-if="isLoading" class="flex flex-col items-center justify-center py-20 gap-4">
+          <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+          <p class="text-slate-400 text-sm font-bold">Cargando servicios...</p>
         </div>
 
         <div v-else-if="services.length === 0" class="flex flex-col items-center justify-center py-20 text-center">
@@ -431,41 +431,45 @@ const handleLogout = () => {
       </div>
 
       <nav
-        class="absolute bottom-0 z-20 w-full bg-surface-light border-t border-slate-100 pb-8 pt-4 px-6 flex justify-between items-center text-[10px] font-bold tracking-wide text-text-secondary uppercase md:rounded-b-3xl"
+        class="absolute bottom-0 z-50 w-full border-t border-slate-100 bg-white/95 pb-8 px-6 backdrop-blur-xl md:rounded-b-3xl"
       >
-        <button
-          @click="router.push('/')"
-          class="flex flex-col items-center gap-1.5 hover:text-primary transition-colors"
-        >
-          <span class="material-symbols-outlined text-[26px]">dashboard</span>
-          Inicio
-        </button>
-        <button
-          class="flex flex-col items-center gap-1.5 text-primary transition-colors"
-        >
-          <span
-            class="material-symbols-outlined text-[26px]"
-            style="font-variation-settings: 'FILL' 1"
-            >inventory_2</span
+        <div class="flex h-20 items-center justify-between">
+          <button @click="router.push('/')" class="group flex flex-col items-center gap-1.5 w-14">
+            <span
+              class="material-symbols-outlined text-slate-400 transition-colors group-hover:text-primary"
+              style="font-size: 26px"
+              >dashboard</span
+            >
+          </button>
+          <button class="group flex flex-col items-center gap-1.5 w-14">
+            <div
+              class="flex h-10 w-12 items-center justify-center rounded-xl bg-primary/10"
+            >
+              <span
+                class="material-symbols-outlined text-primary"
+                style="font-size: 26px; font-variation-settings: 'FILL' 1"
+                >inventory_2</span
+              >
+            </div>
+          </button>
+          <button
+            @click="router.push({ name: 'admin-assigned-services' })"
+            class="group flex flex-col items-center gap-1.5 w-14"
           >
-          Servicios
-        </button>
-        <button
-          @click="router.push({ name: 'admin-assigned-services' })"
-          class="flex flex-col items-center gap-1.5 hover:text-primary transition-colors"
-        >
-          <span class="material-symbols-outlined text-[26px]"
-            >assignment_turned_in</span
-          >
-          Solicitudes
-        </button>
-        <button
-          @click="handleLogout"
-          class="flex flex-col items-center gap-1.5 hover:text-primary transition-colors"
-        >
-          <span class="material-symbols-outlined text-[26px]">logout</span>
-          Salir
-        </button>
+            <span
+              class="material-symbols-outlined text-slate-400 transition-colors group-hover:text-primary"
+              style="font-size: 26px"
+              >assignment_turned_in</span
+            >
+          </button>
+          <button @click="handleLogout" class="group flex flex-col items-center gap-1.5 w-14">
+            <span
+              class="material-symbols-outlined text-slate-400 transition-colors group-hover:text-primary"
+              style="font-size: 26px"
+              >logout</span
+            >
+          </button>
+        </div>
       </nav>
 
       <!-- Modal Creation/Edition -->

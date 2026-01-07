@@ -78,7 +78,7 @@ const getStatusColor = (status: string) => {
 }
 
 const getImageUrl = (image: any) => {
-  if (!image) return null
+  if (!image) return ''
   return `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/storage/${image.path}`
 }
 
@@ -251,7 +251,7 @@ onMounted(() => {
                   @click="selectedImage = getImageUrl(q.service_request?.image)"
                   class="relative h-24 w-40 rounded-xl overflow-hidden cursor-pointer group"
                 >
-                  <img :src="getImageUrl(q.service_request?.image)" class="h-full w-full object-cover transition-transform group-hover:scale-110" />
+                  <img alt="service" :src="getImageUrl(q.service_request?.image)" class="h-full w-full object-cover transition-transform group-hover:scale-110" />
                   <div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <span class="material-symbols-outlined text-white">zoom_in</span>
                   </div>
@@ -345,31 +345,31 @@ onMounted(() => {
         </div>
       </div>
 
-       <nav
+      <nav
         class="absolute bottom-0 z-50 w-full border-t border-slate-100 bg-white/95 pb-8 px-6 backdrop-blur-xl md:rounded-b-3xl"
       >
         <div class="flex h-20 items-center justify-between">
-          <button @click="router.push({ name: 'admin-services' })" class="group flex flex-col items-center gap-1.5 w-14">
+          <button @click="router.push('/')" class="group flex flex-col items-center gap-1.5 w-14">
             <span
               class="material-symbols-outlined text-slate-400 transition-colors group-hover:text-primary"
               style="font-size: 26px"
-              >home</span
+              >dashboard</span
             >
           </button>
-          <button @click="router.push({ name: 'admin-services' })" class="group flex flex-col items-center gap-1.5 w-14">
-             <span
+          <button
+            @click="router.push({ name: 'admin-services' })"
+            class="group flex flex-col items-center gap-1.5 w-14"
+          >
+            <span
               class="material-symbols-outlined text-slate-400 transition-colors group-hover:text-primary"
               style="font-size: 26px"
               >inventory_2</span
             >
           </button>
-          <button
-            class="relative -top-8 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform active:scale-90 hover:bg-primary/90"
-          >
-            <span class="material-symbols-outlined" style="font-size: 32px">add</span>
-          </button>
           <button class="group flex flex-col items-center gap-1.5 w-14">
-            <div class="flex h-10 w-12 items-center justify-center rounded-xl bg-primary/10">
+            <div
+              class="flex h-10 w-12 items-center justify-center rounded-xl bg-primary/10"
+            >
               <span
                 class="material-symbols-outlined text-primary"
                 style="font-size: 26px; font-variation-settings: 'FILL' 1"
