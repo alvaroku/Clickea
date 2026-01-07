@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import ProfileInfo from '../../components/ProfileInfo.vue'
+import NotificationPanel from '../../components/NotificationPanel.vue'
+import NotificationButton from '../../components/NotificationButton.vue'
+import { useNotifications } from '../../composables/useNotifications'
 
 const router = useRouter()
+const { unreadCount, isNotificationPanelOpen, openNotificationPanel, closeNotificationPanel, updateCount } = useNotifications()
 </script>
 
 <template>
@@ -23,12 +27,7 @@ const router = useRouter()
           <h2 class="text-text-main text-xl font-bold tracking-tight">
             Mi Perfil
           </h2>
-          <button
-            class="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-white border border-slate-100 transition-transform active:scale-95 hover:bg-slate-50"
-          >
-            <span class="material-symbols-outlined text-slate-900" style="font-size: 26px">notifications</span>
-            <span class="absolute top-3 right-3 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-white"></span>
-          </button>
+          <NotificationButton :unreadCount="unreadCount" @click="openNotificationPanel" />
         </div>
       </header>
 
@@ -71,6 +70,13 @@ const router = useRouter()
         </div>
       </nav>
     </div>
+
+    <!-- Notification Panel -->
+    <NotificationPanel 
+      v-if="isNotificationPanelOpen"
+      @close="closeNotificationPanel"
+      @update-count="updateCount"
+    />
   </div>
 </template>
 

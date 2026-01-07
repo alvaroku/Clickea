@@ -3,7 +3,12 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../../services/axios'
 import { toast } from 'vue3-toastify'
+import NotificationPanel from '../../components/NotificationPanel.vue'
+import NotificationButton from '../../components/NotificationButton.vue'
+import { useNotifications } from '../../composables/useNotifications'
+
 const router = useRouter()
+const { unreadCount, isNotificationPanelOpen, openNotificationPanel, closeNotificationPanel, updateCount } = useNotifications()
 const requests = ref<any[]>([])
 const categories = ref<any[]>([])
 const isLoading = ref(true)
@@ -190,7 +195,7 @@ onMounted(() => {
             <span class="material-symbols-outlined">arrow_back</span>
           </button>
           <h2 class="text-xl font-extrabold text-slate-900">Mis Solicitudes</h2>
-          <div class="w-10"></div>
+          <NotificationButton :unreadCount="unreadCount" @click="openNotificationPanel" />
         </div>
 
         <!-- Filters -->
@@ -514,7 +519,7 @@ onMounted(() => {
               >
             </div>
           </button>
-             <button @click="router.push({ name: 'admin-profile' })" class="group flex flex-col items-center gap-1.5 w-14">
+             <button @click="router.push({ name: 'user-profile' })" class="group flex flex-col items-center gap-1.5 w-14">
             <span
               class="material-symbols-outlined text-slate-400 transition-colors group-hover:text-primary"
               style="font-size: 26px"
@@ -524,6 +529,13 @@ onMounted(() => {
         </div>
       </nav>
     </div>
+
+    <!-- Notification Panel -->
+    <NotificationPanel
+      v-if="isNotificationPanelOpen"
+      @close="closeNotificationPanel"
+      @updateCount="updateCount"
+    />
   </div>
 </template>
 

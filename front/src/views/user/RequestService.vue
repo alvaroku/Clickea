@@ -3,9 +3,13 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import api from '../../services/axios'
 import { toast } from 'vue3-toastify'
+import NotificationPanel from '../../components/NotificationPanel.vue'
+import NotificationButton from '../../components/NotificationButton.vue'
+import { useNotifications } from '../../composables/useNotifications'
 
 const router = useRouter()
 const route = useRoute()
+const { unreadCount, isNotificationPanelOpen, openNotificationPanel, closeNotificationPanel, updateCount } = useNotifications()
 const serviceId = route.params.id??''
 const service = ref<any>(null)
 const isLoading = ref(true)
@@ -82,14 +86,17 @@ onMounted(() => {
       
       <!-- Header -->
       <header class="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-100 md:rounded-t-3xl">
-        <div class="flex items-center gap-4 px-6 py-6">
-          <button @click="router.back()" class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors">
-            <span class="material-symbols-outlined">arrow_back</span>
-          </button>
-          <div>
-            <h2 class="text-xl font-extrabold text-slate-900">Solicitar Servicio</h2>
-            <p v-if="service" class="text-xs font-bold text-primary uppercase tracking-wider">{{ service.name }}</p>
+        <div class="flex items-center justify-between gap-4 px-6 py-6">
+          <div class="flex items-center gap-4">
+            <button @click="router.back()" class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors">
+              <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <div>
+              <h2 class="text-xl font-extrabold text-slate-900">Solicitar Servicio</h2>
+              <p v-if="service" class="text-xs font-bold text-primary uppercase tracking-wider">{{ service.name }}</p>
+            </div>
           </div>
+          <NotificationButton :unreadCount="unreadCount" @click="openNotificationPanel" />
         </div>
       </header>
 
@@ -204,6 +211,13 @@ onMounted(() => {
       </footer>
 
     </div>
+
+    <!-- Notification Panel -->
+    <NotificationPanel
+      v-if="isNotificationPanelOpen"
+      @close="closeNotificationPanel"
+      @updateCount="updateCount"
+    />
   </div>
 </template>
 

@@ -158,7 +158,7 @@ class ServiceRequestController extends Controller
             ];
         }
 
-        $requestedService = DB::transaction(function () use ($request, $providers, $fileData) {
+        $requestedService = DB::transaction(function () use ($originalService, $request, $providers, $fileData) {
             // 1. Create the single RequestedService
             $serviceRequest = RequestedService::create([
                 'client_id' => $request->user()->id,
@@ -184,14 +184,29 @@ class ServiceRequestController extends Controller
                     'status' => 'pendiente',
                 ]);
 
-                // Send notification
-                try {
-                    $provider = User::find($providerId);
-                    if ($provider) {
+                // Create notification for provider
+                $provider = User::find($providerId);
+                if ($provider) {
+                    \App\Models\Notification::create([
+                        'user_id' => $providerId,
+                        'title' => 'Nueva Solicitud de Servicio',
+                        'message' => "Tienes una nueva solicitud para el servicio {$originalService->name} el {$serviceRequest->date} a las {$serviceRequest->time}.",
+                        'additional_data' => [
+                            'type' => 'service_request',
+                            'service_request_id' => $serviceRequest->id,
+                            'service_name' => $originalService->name??'',
+                            'date' => $serviceRequest->date,
+                            'time' => $serviceRequest->time,
+                            'location' => $serviceRequest->location,
+                        ],
+                    ]);
+
+                    // Also send email
+                    try {
                         Mail::to($provider->email)->send(new ServiceRequestedNotification($serviceRequest));
+                    } catch (\Exception $e) {
+                        Log::error("Error sending email to provider {$providerId}: " . $e->getMessage());
                     }
-                } catch (\Exception $e) {
-                    Log::error("Error sending email to provider {$providerId}: " . $e->getMessage());
                 }
             }
 

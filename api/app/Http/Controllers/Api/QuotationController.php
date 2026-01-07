@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Notification;
 use App\Models\Quotation;
 use App\Models\RequestedService;
 use Illuminate\Http\Request;
@@ -45,6 +46,27 @@ class QuotationController extends Controller
             'price' => $request->price,
             'provider_observations' => $request->provider_observations,
             'status' => 'cotizada'
+        ]);
+
+        // Create notification for the client
+        $serviceRequest = $quotation->serviceRequest;
+        $service = $serviceRequest->service;
+        $provider = $quotation->provider;
+
+        Notification::create([
+            'user_id' => $serviceRequest->client_id,
+            'title' => 'Nueva Cotización Recibida',
+            'message' => "Has recibido una nueva cotización de {$provider->name} para el servicio {$service->name} por $" . number_format($request->price, 2) . ".",
+            'additional_data' => [
+                'type' => 'quotation',
+                'quotation_id' => $quotation->id,
+                'service_request_id' => $serviceRequest->id,
+                'service_name' => $service->name ?? '',
+                'provider_name' => $provider->name,
+                'price' => $request->price,
+                'date' => $serviceRequest->date,
+                'time' => $serviceRequest->time,
+            ],
         ]);
 
         return response()->json([

@@ -3,8 +3,12 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../../services/axios'
 import { toast } from 'vue3-toastify'
+import NotificationPanel from '../../components/NotificationPanel.vue'
+import NotificationButton from '../../components/NotificationButton.vue'
+import { useNotifications } from '../../composables/useNotifications'
 
 const router = useRouter()
+const { unreadCount, isNotificationPanelOpen, openNotificationPanel, closeNotificationPanel, updateCount } = useNotifications()
 const services = ref<any[]>([])
 const categories = ref<any[]>([])
 const isLoading = ref(true)
@@ -81,12 +85,7 @@ const handleLogout = () => {
               Descubre <span class="text-primary">Servicios</span>
             </h2>
           </div>
-          <button
-            class="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-white border border-slate-100 transition-transform active:scale-95 hover:bg-slate-50"
-          >
-            <span class="material-symbols-outlined text-slate-900" style="font-size: 26px">notifications</span>
-            <span class="absolute top-3 right-3 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-white"></span>
-          </button>
+          <NotificationButton :unreadCount="unreadCount" @click="openNotificationPanel" />
         </div>
       </header>
 
@@ -166,12 +165,12 @@ const handleLogout = () => {
                   class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
                   style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA9RUNxl9tHHK5_zyGVDe3Y4nxWW46rYnc2aoXnryOR5T-PMZHYahFeoOOjv4S6jAPr2btB0PnzOhxQ2yOxNwOXk3DKVfykMznasrY9QhnjjdpYnO8qqMLte-sxWvj5yPYa5vo0CMXkAH594dHKN8RGyZTnLniufh1J3idSonDORJ4QSWlWIvVm01S2vorzxNPX5ccnIPhN2zD8F3J0yuicu8bgh3kaPZ7FlW54eUEP7xgPWOAb5RgEksPPBu44DZxatjGjpoYmSXc');"
                 ></div>
-                <div class="absolute top-4 right-4 rounded-lg bg-white px-2 py-1 shadow-sm border border-slate-100">
+                <!-- <div class="absolute top-4 right-4 rounded-lg bg-white px-2 py-1 shadow-sm border border-slate-100">
                   <div class="flex items-center gap-1">
                     <span class="material-symbols-outlined text-yellow-400" style="font-size: 16px">star</span>
                     <span class="text-xs font-bold text-slate-900">4.8</span>
                   </div>
-                </div>
+                </div> -->
                 <div class="absolute bottom-4 left-4">
                   <span
                     class="inline-flex items-center rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-slate-900 shadow-sm border border-slate-100"
@@ -196,11 +195,11 @@ const handleLogout = () => {
                       {{ service.description }}
                     </p>
                   </div>
-                  <div
+                  <!-- <div
                     class="h-10 w-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-300 hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer"
                   >
                     <span class="material-symbols-outlined" style="font-size: 22px">favorite</span>
-                  </div>
+                  </div> -->
                 </div>
                 <div class="flex items-center justify-between border-t border-slate-100 pt-5">
                   <div class="flex flex-col">
@@ -293,6 +292,13 @@ const handleLogout = () => {
         </div>
       </nav>
     </div>
+
+    <!-- Notification Panel -->
+    <NotificationPanel 
+      v-if="isNotificationPanelOpen"
+      @close="closeNotificationPanel"
+      @update-count="updateCount"
+    />
   </div>
 </template>
 

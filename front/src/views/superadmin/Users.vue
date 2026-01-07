@@ -3,8 +3,12 @@ import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 import api from '../../services/axios';
+import NotificationPanel from '../../components/NotificationPanel.vue';
+import NotificationButton from '../../components/NotificationButton.vue';
+import { useNotifications } from '../../composables/useNotifications';
 
 const router = useRouter();
+const { unreadCount, isNotificationPanelOpen, openNotificationPanel, closeNotificationPanel, updateCount } = useNotifications();
 const users = ref<any[]>([]);
 const pagination = ref<any>({});
 const isLoading = ref(true);
@@ -166,12 +170,7 @@ const goBack = () => {
           <h2 class="text-slate-900 text-xl font-bold tracking-tight">
             Gestión de Usuarios
           </h2>
-          <button
-            class="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-white border border-slate-100 transition-transform active:scale-95 hover:bg-slate-50"
-          >
-            <span class="material-symbols-outlined text-slate-900" style="font-size: 26px">notifications</span>
-            <span class="absolute top-3 right-3 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-white"></span>
-          </button>
+          <NotificationButton :unreadCount="unreadCount" @click="openNotificationPanel" />
         </div>
         
         <div class="flex gap-2">
@@ -491,6 +490,13 @@ const goBack = () => {
       </div>
 
     </div>
+
+    <!-- Notification Panel -->
+    <NotificationPanel 
+      v-if="isNotificationPanelOpen"
+      @close="closeNotificationPanel"
+      @update-count="updateCount"
+    />
   </div>
 </template>
 
