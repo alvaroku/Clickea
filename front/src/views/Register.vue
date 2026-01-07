@@ -52,7 +52,7 @@ const handleRegister = async () => {
     // Redirigir después de un momento
     setTimeout(() => {
       if (userRole === 'superadmin') {
-        router.push({ name: 'superadmin-dashboard' })
+        router.push({ name: 'users' })
       } else if (userRole === 'admin') {
         router.push({ name: 'admin-services' })
       } else {

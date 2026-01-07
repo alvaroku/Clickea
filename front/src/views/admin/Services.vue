@@ -210,11 +210,12 @@ const handleLogout = () => {
           <h2 class="text-text-main text-xl font-bold tracking-tight">
             Servicios
           </h2>
-          <div class="flex items-center justify-end">
-            <button @click="handleLogout" class="flex size-10 items-center justify-center rounded-full hover:bg-slate-50 transition-colors text-slate-400">
-              <span class="material-symbols-outlined text-2xl">logout</span>
-            </button>
-          </div>
+          <button
+            class="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-white border border-slate-100 transition-transform active:scale-95 hover:bg-slate-50"
+          >
+            <span class="material-symbols-outlined text-slate-900" style="font-size: 26px">notifications</span>
+            <span class="absolute top-3 right-3 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-white"></span>
+          </button>
         </div>
 
         <div class="flex flex-col gap-3">
@@ -420,10 +421,10 @@ const handleLogout = () => {
         </div>
       </main>
 
-      <div class="absolute bottom-24 right-6 z-30 md:bottom-28">
+      <div class="absolute bottom-32 right-6 z-30 md:bottom-36">
         <button
           @click="openCreateModal"
-          class="flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white rounded-2xl px-5 py-4 shadow-xl shadow-primary/20 transition-transform active:scale-95 group"
+          class="flex items-center justify-center gap-3 bg-primary hover:bg-primary-hover text-white rounded-2xl h-14 px-6 shadow-xl shadow-primary/20 transition-transform active:scale-95 group"
         >
           <span class="material-symbols-outlined text-2xl group-hover:rotate-90 transition-transform">add</span>
           <span class="font-bold text-sm tracking-wide">Nuevo Servicio</span>
@@ -434,13 +435,6 @@ const handleLogout = () => {
         class="absolute bottom-0 z-50 w-full border-t border-slate-100 bg-white/95 pb-8 px-6 backdrop-blur-xl md:rounded-b-3xl"
       >
         <div class="flex h-20 items-center justify-between">
-          <button @click="router.push('/')" class="group flex flex-col items-center gap-1.5 w-14">
-            <span
-              class="material-symbols-outlined text-slate-400 transition-colors group-hover:text-primary"
-              style="font-size: 26px"
-              >dashboard</span
-            >
-          </button>
           <button class="group flex flex-col items-center gap-1.5 w-14">
             <div
               class="flex h-10 w-12 items-center justify-center rounded-xl bg-primary/10"
@@ -462,11 +456,11 @@ const handleLogout = () => {
               >assignment_turned_in</span
             >
           </button>
-          <button @click="handleLogout" class="group flex flex-col items-center gap-1.5 w-14">
+          <button @click="router.push({ name: 'admin-profile' })" class="group flex flex-col items-center gap-1.5 w-14">
             <span
               class="material-symbols-outlined text-slate-400 transition-colors group-hover:text-primary"
               style="font-size: 26px"
-              >logout</span
+              >account_circle</span
             >
           </button>
         </div>

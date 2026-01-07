@@ -502,13 +502,6 @@ onMounted(() => {
             <span
               class="material-symbols-outlined text-slate-400 transition-colors group-hover:text-primary"
               style="font-size: 26px"
-              >home</span
-            >
-          </button>
-          <button @click="router.push({ name: 'user-services' })" class="group flex flex-col items-center gap-1.5 w-14">
-            <span
-              class="material-symbols-outlined text-slate-400 transition-colors group-hover:text-primary"
-              style="font-size: 26px"
               >manage_search</span
             >
           </button>
@@ -521,11 +514,11 @@ onMounted(() => {
               >
             </div>
           </button>
-          <button @click="handleLogout" class="group flex flex-col items-center gap-1.5 w-14">
+             <button @click="router.push({ name: 'admin-profile' })" class="group flex flex-col items-center gap-1.5 w-14">
             <span
               class="material-symbols-outlined text-slate-400 transition-colors group-hover:text-primary"
               style="font-size: 26px"
-              >logout</span
+              >account_circle</span
             >
           </button>
         </div>

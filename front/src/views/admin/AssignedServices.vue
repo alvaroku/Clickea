@@ -349,13 +349,6 @@ onMounted(() => {
         class="absolute bottom-0 z-50 w-full border-t border-slate-100 bg-white/95 pb-8 px-6 backdrop-blur-xl md:rounded-b-3xl"
       >
         <div class="flex h-20 items-center justify-between">
-          <button @click="router.push('/')" class="group flex flex-col items-center gap-1.5 w-14">
-            <span
-              class="material-symbols-outlined text-slate-400 transition-colors group-hover:text-primary"
-              style="font-size: 26px"
-              >dashboard</span
-            >
-          </button>
           <button
             @click="router.push({ name: 'admin-services' })"
             class="group flex flex-col items-center gap-1.5 w-14"
@@ -377,11 +370,11 @@ onMounted(() => {
               >
             </div>
           </button>
-          <button @click="handleLogout" class="group flex flex-col items-center gap-1.5 w-14">
+         <button @click="router.push({ name: 'admin-profile' })" class="group flex flex-col items-center gap-1.5 w-14">
             <span
               class="material-symbols-outlined text-slate-400 transition-colors group-hover:text-primary"
               style="font-size: 26px"
-              >logout</span
+              >account_circle</span
             >
           </button>
         </div>

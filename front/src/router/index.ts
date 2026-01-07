@@ -4,11 +4,14 @@ import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import AdminServices from '../views/admin/Services.vue'
 import AssignedServices from '../views/admin/AssignedServices.vue'
+import AdminProfile from '../views/admin/Profile.vue'
 import UserServices from '../views/user/Services.vue'
 import RequestService from '../views/user/RequestService.vue'
 import RequestedServices from '../views/user/RequestedServices.vue'
-import SuperAdminDashboard from '../views/superadmin/Dashboard.vue'
+import UserProfile from '../views/user/Profile.vue'
 import SuperAdminCategories from '../views/superadmin/Categories.vue'
+import SuperAdminProfile from '../views/superadmin/Profile.vue'
+import Users from '../views/superadmin/Users.vue'
 
 const routes = [
   {
@@ -40,6 +43,12 @@ const routes = [
     meta: { requiresAuth: true, role: 'admin' }
   },
   {
+    path: '/admin/profile',
+    name: 'admin-profile',
+    component: AdminProfile,
+    meta: { requiresAuth: true, role: 'admin' }
+  },
+  {
     path: '/user/services',
     name: 'user-services',
     component: UserServices,
@@ -59,15 +68,27 @@ const routes = [
     meta: { requiresAuth: true, role: 'user' }
   },
   {
+    path: '/user/profile',
+    name: 'user-profile',
+    component: UserProfile,
+    meta: { requiresAuth: true, role: 'user' }
+  },
+  {
     path: '/superadmin/dashboard',
-    name: 'superadmin-dashboard',
-    component: SuperAdminDashboard,
+    name: 'users',
+    component: Users,
     meta: { requiresAuth: true, role: 'superadmin' }
   },
   {
     path: '/superadmin/categories',
     name: 'superadmin-categories',
     component: SuperAdminCategories,
+    meta: { requiresAuth: true, role: 'superadmin' }
+  },
+  {
+    path: '/superadmin/profile',
+    name: 'superadmin-profile',
+    component: SuperAdminProfile,
     meta: { requiresAuth: true, role: 'superadmin' }
   }
 ]

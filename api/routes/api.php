@@ -10,12 +10,22 @@ use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ServiceRequestController;
 use App\Http\Controllers\Api\QuotationController;
+use App\Http\Controllers\Api\TestMailController;
+use App\Http\Controllers\Api\ProfileController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
+Route::get('/test-mail', [TestMailController::class, 'sendTestMail']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    // Profile
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::put('/profile', [ProfileController::class, 'update']);
+    Route::post('/profile/picture', [ProfileController::class, 'uploadPicture']);
+    Route::delete('/profile/picture', [ProfileController::class, 'deletePicture']);
+
     Route::apiResource('products', ProductController::class);
 
     // Services

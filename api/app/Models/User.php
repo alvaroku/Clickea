@@ -21,11 +21,17 @@ class User extends Authenticatable
         'password',
         'role_id',
         'active',
+        'profile_picture_id',
     ];
 
     public function role()
     {
         return $this->belongsTo(Role::class);
+    }
+
+    public function profilePicture()
+    {
+        return $this->belongsTo(File::class, 'profile_picture_id');
     }
 
     public function requestsMade()

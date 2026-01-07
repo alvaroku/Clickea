@@ -24,7 +24,7 @@ onMounted(() => {
       const user = JSON.parse(userStr)
       const userRole = user.role?.name
       if (userRole === 'superadmin') {
-        router.push({ name: 'superadmin-dashboard' })
+        router.push({ name: 'users' })
       } else if (userRole === 'admin') {
         router.push({ name: 'admin-services' })
       } else {
@@ -61,7 +61,7 @@ const handleLogin = async () => {
     setTimeout(() => {
       const userRole = data.user.role?.name
       if (userRole === 'superadmin') {
-        router.push({ name: 'superadmin-dashboard' })
+        router.push({ name: 'users' })
       } else if (userRole === 'admin') {
         router.push({ name: 'admin-services' })
       } else {
