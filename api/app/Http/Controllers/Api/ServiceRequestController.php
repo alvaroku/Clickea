@@ -68,12 +68,7 @@ class ServiceRequestController extends Controller
 
         // Filter by validity
         if ($request->filled('validity_status')) {
-            $now = now()->toDateTimeString();
-            if ($request->validity_status === 'vigente') {
-                $query->whereRaw("CONCAT(date, ' ', time) > ?", [$now]);
-            } elseif ($request->validity_status === 'finalizada') {
-                $query->whereRaw("CONCAT(date, ' ', time) <= ?", [$now]);
-            }
+            $query->where('validity_status', $request->validity_status);
         }
 
         $requests = $query->orderBy('created_at', 'desc')->paginate(10);
@@ -108,16 +103,9 @@ class ServiceRequestController extends Controller
 
         // Filter by validity (Service Request date)
         if ($request->filled('validity_status')) {
-            $now = now()->toDateTimeString();
-            if ($request->validity_status === 'vigente') {
-                $query->whereHas('serviceRequest', function($q) use ($now) {
-                    $q->whereRaw("CONCAT(date, ' ', time) > ?", [$now]);
-                });
-            } elseif ($request->validity_status === 'finalizada') {
-                $query->whereHas('serviceRequest', function($q) use ($now) {
-                    $q->whereRaw("CONCAT(date, ' ', time) <= ?", [$now]);
-                });
-            }
+            $query->whereHas('serviceRequest', function($q) use ($request) {
+                $q->where('validity_status', $request->validity_status);
+            });
         }
 
         $quotations = $query->orderBy('created_at', 'desc')->paginate(10);
