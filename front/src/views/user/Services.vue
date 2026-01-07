@@ -211,6 +211,7 @@ const handleLogout = () => {
                     </span>
                   </div>
                   <button
+                    @click="router.push({ name: 'user-request-service', params: { id: service.id } })"
                     class="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-800 text-white transition-transform active:scale-95"
                   >
                     <span class="material-symbols-outlined" style="font-size: 24px">arrow_forward</span>
@@ -286,11 +287,11 @@ const handleLogout = () => {
           >
             <span class="material-symbols-outlined" style="font-size: 32px">add</span>
           </button>
-          <button class="group flex flex-col items-center gap-1.5 w-14">
+          <button @click="router.push({ name: 'user-requests' })" class="group flex flex-col items-center gap-1.5 w-14">
             <span
               class="material-symbols-outlined text-slate-400 transition-colors group-hover:text-primary"
               style="font-size: 26px"
-              >calendar_month</span
+              >receipt_long</span
             >
           </button>
           <button @click="handleLogout" class="group flex flex-col items-center gap-1.5 w-14">

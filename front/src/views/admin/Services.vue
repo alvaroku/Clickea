@@ -451,12 +451,13 @@ const handleLogout = () => {
           Servicios
         </button>
         <button
+          @click="router.push({ name: 'admin-assigned-services' })"
           class="flex flex-col items-center gap-1.5 hover:text-primary transition-colors"
         >
           <span class="material-symbols-outlined text-[26px]"
-            >calendar_month</span
+            >assignment_turned_in</span
           >
-          Eventos
+          Solicitudes
         </button>
         <button
           @click="handleLogout"

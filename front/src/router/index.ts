@@ -3,7 +3,10 @@ import Welcome from '../views/Welcome.vue'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import AdminServices from '../views/admin/Services.vue'
+import AssignedServices from '../views/admin/AssignedServices.vue'
 import UserServices from '../views/user/Services.vue'
+import RequestService from '../views/user/RequestService.vue'
+import RequestedServices from '../views/user/RequestedServices.vue'
 import SuperAdminDashboard from '../views/superadmin/Dashboard.vue'
 import SuperAdminCategories from '../views/superadmin/Categories.vue'
 
@@ -31,9 +34,28 @@ const routes = [
     meta: { requiresAuth: true, role: 'admin' }
   },
   {
+    path: '/admin/assigned-services',
+    name: 'admin-assigned-services',
+    component: AssignedServices,
+    meta: { requiresAuth: true, role: 'admin' }
+  },
+  {
     path: '/user/services',
     name: 'user-services',
     component: UserServices,
+    meta: { requiresAuth: true, role: 'user' }
+  },
+  {
+    path: '/user/services/:id/request',
+    name: 'user-request-service',
+    component: RequestService,
+    meta: { requiresAuth: true, role: 'user' },
+    props: true
+  },
+  {
+    path: '/user/requests',
+    name: 'user-requests',
+    component: RequestedServices,
     meta: { requiresAuth: true, role: 'user' }
   },
   {

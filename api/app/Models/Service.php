@@ -33,4 +33,9 @@ class Service extends Model
     {
         return $this->belongsTo(Category::class);
     }
+
+    public function requests()
+    {
+        return $this->hasMany(RequestedService::class);
+    }
 }

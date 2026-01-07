@@ -111,12 +111,14 @@ class ServiceController extends Controller
      */
     public function show(Service $service)
     {
-        if ($service->user_id !== Auth::id()) {
-            return response()->json(['message' => 'No autorizado'], 403);
+        // El dueño puede verlo siempre.
+        // Otros pueden verlo si está activo.
+        if ($service->user_id !== Auth::id() && !$service->active) {
+            return response()->json(['message' => 'Servicio no disponible'], 403);
         }
 
         return response()->json([
-            'data' => $service,
+            'data' => $service->load('category'),
             'message' => 'Servicio obtenido exitosamente.'
         ]);
     }
