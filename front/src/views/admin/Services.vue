@@ -41,6 +41,13 @@ const form = ref({
   gender: 'both' as 'male' | 'female' | 'both' | null
 })
 
+// Image handling
+const newImages = ref<File[]>([])
+const imagesPreviews = ref<string[]>([])
+const existingImages = ref<any[]>([])
+const fileInput = ref<HTMLInputElement | null>(null)
+const API_URL = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || ''
+
 // Estado del menú de opciones (como en dashboard)
 const activeMenuId = ref<number | null>(null)
 
@@ -116,6 +123,9 @@ const openCreateModal = () => {
     category_id: null,
     gender: 'both'
   }
+  newImages.value = []
+  imagesPreviews.value = []
+  existingImages.value = []
   isModalOpen.value = true
 }
 
@@ -130,8 +140,46 @@ const openEditModal = (service: any) => {
     category_id: service.category_id,
     gender: service.gender || 'both'
   }
+  newImages.value = []
+  imagesPreviews.value = []
+  existingImages.value = service.images || []
   isModalOpen.value = true
   activeMenuId.value = null
+}
+
+const handleImageSelect = (event: any) => {
+  const files = Array.from(event.target.files || []) as File[]
+  files.forEach(file => {
+    if (file && file.type.startsWith('image/')) {
+      newImages.value.push(file)
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        imagesPreviews.value.push(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  })
+  // Reset input
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
+}
+
+const removeNewImage = (index: number) => {
+  newImages.value.splice(index, 1)
+  imagesPreviews.value.splice(index, 1)
+}
+
+const removeExistingImage = async (imageId: number) => {
+  if (!confirm('¿Eliminar esta imagen?')) return
+  
+  try {
+    await api.delete(`/services/${editingService.value.id}/images/${imageId}`)
+    existingImages.value = existingImages.value.filter(img => img.id !== imageId)
+    toast.success('Imagen eliminada')
+  } catch (error: any) {
+    toast.error('Error al eliminar imagen')
+  }
 }
 
 const closeModal = () => {
@@ -144,11 +192,34 @@ const saveService = async () => {
   isSaving.value = true
 
   try {
+    const formData = new FormData()
+    formData.append('name', form.value.name)
+    formData.append('description', form.value.description || '')
+    formData.append('price', form.value.price.toString())
+    formData.append('active', form.value.active ? '1' : '0')
+    if (form.value.category_id) {
+      formData.append('category_id', form.value.category_id.toString())
+    }
+    if (form.value.gender) {
+      formData.append('gender', form.value.gender)
+    }
+    
+    // Add images
+    newImages.value.forEach((image) => {
+      formData.append('images[]', image)
+    })
+
     let response
     if (modalMode.value === 'create') {
-      response = await api.post('/services', form.value)
+      response = await api.post('/services', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
     } else {
-      response = await api.put(`/services/${editingService.value.id}`, form.value)
+      // Laravel doesn't support multipart with PUT, use POST with _method
+      formData.append('_method', 'PUT')
+      response = await api.post(`/services/${editingService.value.id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
     }
 
     toast.success(response.data.message || 'Operación exitosa')
@@ -312,7 +383,13 @@ const handleLogout = () => {
           <div
             class="relative shrink-0 overflow-hidden rounded-2xl size-16 bg-slate-50 flex items-center justify-center border border-slate-100"
           >
-            <span class="material-symbols-outlined text-slate-400 text-3xl">local_mall</span>
+            <img 
+              v-if="service.images && service.images.length > 0" 
+              :src="`${API_URL}/storage/${service.images[0].path}`"
+              :alt="service.name"
+              class="w-full h-full object-cover"
+            />
+            <span v-else class="material-symbols-outlined text-slate-400 text-3xl">local_mall</span>
           </div>
           <div class="flex flex-col flex-1 min-w-0">
             <div class="flex justify-between items-start mb-1">
@@ -533,6 +610,79 @@ const handleLogout = () => {
                   <option value="female">Mujer</option>
                 </select>
               </div>
+            </div>
+
+            <!-- Images Section -->
+            <div class="space-y-3">
+              <label class="text-xs font-black text-text-secondary uppercase tracking-widest pl-1">Imágenes del Servicio</label>
+              
+              <!-- Existing Images -->
+              <div v-if="existingImages.length > 0" class="space-y-2">
+                <p class="text-xs font-bold text-slate-500 pl-1">Imágenes actuales</p>
+                <div class="grid grid-cols-3 gap-2">
+                  <div 
+                    v-for="image in existingImages" 
+                    :key="image.id"
+                    class="relative group aspect-square rounded-xl overflow-hidden bg-slate-100 border-2 border-slate-200"
+                  >
+                    <img 
+                      :src="`${API_URL}/storage/${image.path}`"
+                      :alt="image.original_name"
+                      class="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      @click.stop="removeExistingImage(image.id)"
+                      class="absolute top-1 right-1 size-7 bg-red-500 text-white rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                    >
+                      <span class="material-symbols-outlined text-sm">delete</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- New Images Preview -->
+              <div v-if="imagesPreviews.length > 0" class="space-y-2">
+                <p class="text-xs font-bold text-slate-500 pl-1">Nuevas imágenes</p>
+                <div class="grid grid-cols-3 gap-2">
+                  <div 
+                    v-for="(preview, index) in imagesPreviews" 
+                    :key="index"
+                    class="relative group aspect-square rounded-xl overflow-hidden bg-slate-100 border-2 border-primary/30"
+                  >
+                    <img 
+                      :src="preview"
+                      alt="Nueva imagen"
+                      class="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      @click.stop="removeNewImage(index)"
+                      class="absolute top-1 right-1 size-7 bg-red-500 text-white rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                    >
+                      <span class="material-symbols-outlined text-sm">close</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Upload Button -->
+              <button
+                type="button"
+                @click="fileInput?.click()"
+                class="w-full py-4 rounded-2xl border-2 border-dashed border-slate-300 hover:border-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2 text-slate-600 hover:text-primary font-bold"
+              >
+                <span class="material-symbols-outlined">add_photo_alternate</span>
+                <span class="text-sm">Agregar Imágenes</span>
+              </button>
+              <input
+                ref="fileInput"
+                type="file"
+                accept="image/*"
+                multiple
+                @change="handleImageSelect"
+                class="hidden"
+              />
             </div>
 
             <div class="grid grid-cols-2 gap-4">

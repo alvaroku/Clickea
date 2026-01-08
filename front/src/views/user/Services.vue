@@ -9,6 +9,7 @@ import { useNotifications } from '../../composables/useNotifications'
 
 const router = useRouter()
 const { unreadCount, isNotificationPanelOpen, openNotificationPanel, closeNotificationPanel, updateCount } = useNotifications()
+const API_URL =(image:any)=> `${import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || ''}/storage/${image.path}`
 const services = ref<any[]>([])
 const categories = ref<any[]>([])
 const isLoading = ref(true)
@@ -161,10 +162,18 @@ const handleLogout = () => {
               class="group flex flex-col overflow-hidden rounded-[2rem] bg-white transition-all hover:shadow-lg ring-1 ring-slate-100 shadow-card"
             >
               <div class="relative aspect-[16/9] w-full overflow-hidden bg-gray-100">
+                <img 
+                  v-if="service.images && service.images.length > 0"
+                  :src="API_URL(service.images[0])"
+                  :alt="service.name"
+                  class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
                 <div
-                  class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-                  style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA9RUNxl9tHHK5_zyGVDe3Y4nxWW46rYnc2aoXnryOR5T-PMZHYahFeoOOjv4S6jAPr2btB0PnzOhxQ2yOxNwOXk3DKVfykMznasrY9QhnjjdpYnO8qqMLte-sxWvj5yPYa5vo0CMXkAH594dHKN8RGyZTnLniufh1J3idSonDORJ4QSWlWIvVm01S2vorzxNPX5ccnIPhN2zD8F3J0yuicu8bgh3kaPZ7FlW54eUEP7xgPWOAb5RgEksPPBu44DZxatjGjpoYmSXc');"
-                ></div>
+                  v-else
+                  class="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center"
+                >
+                  <span class="material-symbols-outlined text-slate-300" style="font-size: 64px">local_mall</span>
+                </div>
                 <!-- <div class="absolute top-4 right-4 rounded-lg bg-white px-2 py-1 shadow-sm border border-slate-100">
                   <div class="flex items-center gap-1">
                     <span class="material-symbols-outlined text-yellow-400" style="font-size: 16px">star</span>

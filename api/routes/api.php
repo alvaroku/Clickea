@@ -41,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/services/catalog', [ServiceController::class, 'catalog']);
     Route::apiResource('services', ServiceController::class);
     Route::patch('/services/{service}/status', [ServiceController::class, 'toggleStatus']);
+    Route::delete('/services/{service}/images/{file}', [ServiceController::class, 'deleteImage']);
 
     // Service Requests
     Route::get('/service-requests', [ServiceRequestController::class, 'index']);

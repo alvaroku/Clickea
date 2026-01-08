@@ -152,7 +152,7 @@ const getStatusColor = (status: string) => {
 
 const getImageUrl = (image: any): string => {
   if (!image || !image.path) return ''
-  return `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/storage/${image.path}`
+  return `${import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || ''}/storage/${image.path}`
 }
 
 const handleAction = async (action: string, id: number) => {

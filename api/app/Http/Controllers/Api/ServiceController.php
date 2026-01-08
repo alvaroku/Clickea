@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\File;
 use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class ServiceController extends Controller
 {
@@ -14,7 +16,7 @@ class ServiceController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Service::where('user_id', Auth::id())->with('category');
+        $query = Service::where('user_id', Auth::id())->with(['category', 'images']);
 
         // Búsqueda por texto (nombre o descripción)
         if ($request->has('search') && !empty($request->search)) {
@@ -49,7 +51,7 @@ class ServiceController extends Controller
      */
     public function catalog(Request $request)
     {
-        $query = Service::where('active', true)->with(['category', 'owner']);
+        $query = Service::where('active', true)->with(['category', 'owner', 'images']);
 
         // Búsqueda por texto
         if ($request->has('search') && !empty($request->search)) {
@@ -92,7 +94,9 @@ class ServiceController extends Controller
             'price' => 'nullable|numeric|min:0',
             'active' => 'boolean',
             'category_id' => 'nullable|exists:categories,id',
-            'gender' => 'nullable|in:male,female,both'
+            'gender' => 'nullable|in:male,female,both',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
         $service = Service::create([
@@ -100,8 +104,24 @@ class ServiceController extends Controller
             'user_id' => Auth::id()
         ]);
 
+        // Handle image uploads
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('service_images', 'public');
+
+                File::create([
+                    'path' => $path,
+                    'original_name' => $image->getClientOriginalName(),
+                    'mime_type' => $image->getMimeType(),
+                    'size' => $image->getSize(),
+                    'fileable_id' => $service->id,
+                    'fileable_type' => Service::class,
+                ]);
+            }
+        }
+
         return response()->json([
-            'data' => $service,
+            'data' => $service->load('images'),
             'message' => 'Servicio creado exitosamente.'
         ], 201);
     }
@@ -118,7 +138,7 @@ class ServiceController extends Controller
         }
 
         return response()->json([
-            'data' => $service->load('category'),
+            'data' => $service->load(['category', 'images']),
             'message' => 'Servicio obtenido exitosamente.'
         ]);
     }
@@ -138,13 +158,31 @@ class ServiceController extends Controller
             'price' => 'nullable|numeric|min:0',
             'active' => 'boolean',
             'category_id' => 'nullable|exists:categories,id',
-            'gender' => 'nullable|in:male,female,both'
+            'gender' => 'nullable|in:male,female,both',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
         $service->update($validated);
 
+        // Handle new image uploads
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('service_images', 'public');
+
+                File::create([
+                    'path' => $path,
+                    'original_name' => $image->getClientOriginalName(),
+                    'mime_type' => $image->getMimeType(),
+                    'size' => $image->getSize(),
+                    'fileable_id' => $service->id,
+                    'fileable_type' => Service::class,
+                ]);
+            }
+        }
+
         return response()->json([
-            'data' => $service,
+            'data' => $service->load('images'),
             'message' => 'Servicio actualizado exitosamente.'
         ]);
     }
@@ -182,6 +220,33 @@ class ServiceController extends Controller
         return response()->json([
             'data' => $service,
             'message' => "Servicio {$status} exitosamente."
+        ]);
+    }
+
+    /**
+     * Delete a specific image from a service.
+     */
+    public function deleteImage(Service $service, File $file)
+    {
+        if ($service->user_id !== Auth::id()) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
+        // Verify the file belongs to this service
+        if ($file->fileable_id !== $service->id || $file->fileable_type !== Service::class) {
+            return response()->json(['message' => 'Imagen no pertenece a este servicio'], 403);
+        }
+
+        // Delete from storage
+        if (Storage::disk('public')->exists($file->path)) {
+            Storage::disk('public')->delete($file->path);
+        }
+
+        // Delete from database
+        $file->delete();
+
+        return response()->json([
+            'message' => 'Imagen eliminada exitosamente.'
         ]);
     }
 }

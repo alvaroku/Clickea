@@ -38,4 +38,12 @@ class Service extends Model
     {
         return $this->hasMany(RequestedService::class);
     }
+
+    /**
+     * Get all of the service's images.
+     */
+    public function images()
+    {
+        return $this->morphMany(File::class, 'fileable');
+    }
 }
